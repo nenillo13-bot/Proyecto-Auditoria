@@ -20,28 +20,12 @@
   .sync-offline { background: #fee2e2; color: #7f1d1d; }
   .sync-syncing { background: #fef3c7; color: #78350f; }
   
-  .admin-btn { 
-    padding: 6px 15px; 
-    background: #6c5ce7; 
-    color: white; 
-    border: none; 
-    border-radius: 6px; 
-    font-size: 12px; 
-    font-weight: 600; 
-    cursor: pointer; 
-  }
+  .admin-btn { padding: 6px 15px; background: #6c5ce7; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
   .admin-btn:hover { background: #5b4cdb; }
   .admin-btn.active { background: #e74c3c; }
   .admin-btn.active:hover { background: #c0392b; }
   
-  .admin-indicator {
-    display: none;
-    font-size: 11px;
-    color: #e74c3c;
-    margin-top: 5px;
-    font-weight: 600;
-    text-align: center;
-  }
+  .admin-indicator { display: none; font-size: 11px; color: #e74c3c; margin-top: 5px; font-weight: 600; text-align: center; }
   .admin-indicator.show { display: block; }
 
   .form-card { background: #f0f4f8; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid #d0d7de; }
@@ -49,11 +33,7 @@
   .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
   .field { display: flex; flex-direction: column; gap: 4px; }
   .field label { font-size: 12px; color: #444; font-weight: 600; }
-  .field input, .field select {
-    font-size: 14px; padding: 7px 10px;
-    border-radius: 6px; border: 1px solid #bbb;
-    background: #fff; color: #1a1a1a; width: 100%;
-  }
+  .field input, .field select { font-size: 14px; padding: 7px 10px; border-radius: 6px; border: 1px solid #bbb; background: #fff; color: #1a1a1a; width: 100%; }
   .field input:focus, .field select:focus { outline: none; border-color: #185FA5; box-shadow: 0 0 0 2px #185FA522; }
 
   .btn-row { display: flex; align-items: center; gap: 12px; margin-top: 1rem; flex-wrap: wrap; }
@@ -173,17 +153,11 @@
   .modal-btn-secondary:hover { background: #ccc; }
   .modal-error { color: #e74c3c; font-size: 12px; margin-bottom: 1rem; display: none; }
 
-  @media (max-width: 768px) {
-    .resumen-general-container { grid-template-columns: 1fr; }
-    .top-bar { flex-direction: column; align-items: flex-end; }
-  }
+  @media (max-width: 768px) { .resumen-general-container { grid-template-columns: 1fr; } .top-bar { flex-direction: column; align-items: flex-end; } }
 
   @media print {
-    .btn-row, .filter-row, .btn-del, .btn-edit, .form-card, .admin-btn, 
-    .admin-indicator, .modal-overlay, .top-bar, .btn-view-report, .btn-toggle-avance,
-    .btn-refresh, .sync-status { display: none !important; }
-    body { background: #fff; }
-    .app { padding: 0; }
+    .btn-row, .filter-row, .btn-del, .btn-edit, .form-card, .admin-btn, .admin-indicator, .modal-overlay, .top-bar, .btn-view-report, .btn-toggle-avance, .btn-refresh, .sync-status { display: none !important; }
+    body { background: #fff; } .app { padding: 0; }
     .avance-auditores { display: block !important; }
     .reporte-mensual-card { display: block !important; }
   }
@@ -192,150 +166,77 @@
 <body>
 <div class="app">
 
-  <!-- ⚠️ CAMBIA ESTA URL POR LA QUE TE DA GOOGLE APPS SCRIPT -->
-  <div id="apiConfig" data-api="https://script.google.com/macros/s/AKfycbzeQ4EvdwjgOsByoGBWyyN_2f5As470y_5t4wZsA8JF0zWM0P4pV9D1B-KAcoAnxLVn/exec" style="display:none;"></div>
+  <!-- ⚠️ CAMBIA ESTA URL POR LA TUYA DE GOOGLE APPS SCRIPT -->
+  <div id="apiConfig" data-api="https://script.google.com/macros/s/AKfycbzeQ4EvdwjgOsByoGBWyyN_2f5As470y_5t4wZsA8JF0zWM0P4pV9D1B-KAcoAnxLVn/exec"></div>
 
   <div class="header">
     <div class="top-bar">
       <span class="sync-status sync-online" id="syncStatus">🟢 Online</span>
-      <button class="btn-refresh" onclick="cargarDatosDesdeSheets()">🔄 Sincronizar</button>
-      <button class="btn-toggle-avance" onclick="toggleAvanceAuditores()">📈 Avance Detallado</button>
-      <button class="btn-view-report" onclick="toggleReporteMensual()">📊 Reporte Mensual</button>
+      <button class="btn-refresh" onclick="cargarDatos()">🔄 Sincronizar</button>
+      <button class="btn-toggle-avance" onclick="toggleAvanceAuditores()">📈 Avance</button>
+      <button class="btn-view-report" onclick="toggleReporteMensual()">📊 Mensual</button>
       <button class="admin-btn" id="adminBtn" onclick="toggleAdmin()">🔒 Modo Admin</button>
     </div>
-    <h1>REPORTE DE AUDITORÍA - ONLINE</h1>
-    <div class="admin-indicator" id="adminIndicator">⚠️ Modo edición activado - Puedes editar y eliminar registros</div>
+    <h1>REPORTE DE AUDITORÍA</h1>
+    <div class="admin-indicator" id="adminIndicator">⚠️ Modo edición activado - Puedes editar y eliminar</div>
   </div>
 
   <div class="form-card">
     <div class="section-title" id="formTitle">Agregar registro</div>
     <div class="form-grid">
-      <div class="field">
-        <label>Auditor</label>
-        <select id="f-auditor">
-         <option value="BETSABET">BETSABET</option>
-          <option value="CECILIA">CECILIA</option>
-          <option value="HERNAN">HERNAN</option>
-          <option value="MARIA TERESA">MARIA TERESA</option>
-          <option value="MERY">MERY</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Cantidad FUAs entregadas</label>
-        <input type="number" id="f-fuas-e" min="1" placeholder="0">
-      </div>
-      <div class="field">
-        <label>Fecha de entrega</label>
-        <input type="date" id="f-fecha-e">
-      </div>
-      <div class="field">
-        <label>Cantidad FUAs auditadas</label>
-        <input type="number" id="f-fuas-a" min="1" placeholder="0">
-      </div>
-      <div class="field">
-        <label>Fecha devolución auditadas</label>
-        <input type="date" id="f-fecha-d">
-      </div>
-      <div class="field">
-        <label>Categoría</label>
-       <select id="f-categoria">
-          <option value="consulta externa">Consulta externa</option>
-          <option value="Emergencia">Emergencia</option>
-          <option value="Hospitalizacion">Hospitalización</option>
-          <option value="Apoyo al diagnostico">Apoyo al diagnóstico</option>
-          <option value="NEO">NEO</option>
-          <option value="Oxigeno">Oxígeno</option>
-          <option value="otros cod prestacionales">Otros cód. prestacionales</option>
-        </select>
-      </div>
+      <div class="field"><label>Auditor</label><select id="f-auditor"><option value="">Seleccionar</option><option>BETSABET</option><option>CECILIA</option><option>HERNAN</option><option>MARIA TERESA</option><option>MERY</option></select></div>
+      <div class="field"><label>FUAs entregadas</label><input type="number" id="f-fuas-e" min="1" placeholder="0"></div>
+      <div class="field"><label>Fecha de entrega</label><input type="date" id="f-fecha-e"></div>
+      <div class="field"><label>FUAs auditadas</label><input type="number" id="f-fuas-a" min="1" placeholder="0"></div>
+      <div class="field"><label>Fecha devolución</label><input type="date" id="f-fecha-d"></div>
+      <div class="field"><label>Categoría</label><select id="f-categoria"><option value="">Seleccionar</option><option>consulta externa</option><option>Emergencia</option><option>Hospitalizacion</option><option>Apoyo al diagnostico</option><option>NEO</option><option>Oxigeno</option><option>otros cod prestacionales</option></select></div>
     </div>
     <div class="btn-row">
       <button class="btn-add" id="btnAdd" onclick="agregarRegistro()">+ Agregar datos</button>
-      <button class="btn-update" id="btnUpdate" onclick="actualizarRegistro()">✏️ Actualizar registro</button>
+      <button class="btn-update" id="btnUpdate" onclick="actualizarRegistro()">✏️ Actualizar</button>
       <button class="btn-cancel" id="btnCancel" onclick="cancelarEdicion()">✕ Cancelar</button>
-      <button class="btn-export-csv" onclick="exportarCSV()">⬇ Exportar CSV</button>
-      <button class="btn-export-pdf" onclick="window.print()">🖨 Imprimir / PDF</button>
-      <span class="success-msg" id="ok-msg">✓ Operación exitosa</span>
+      <button class="btn-export-csv" onclick="exportarCSV()">⬇ CSV</button>
+      <button class="btn-export-pdf" onclick="window.print()">🖨 PDF</button>
+      <span class="success-msg" id="ok-msg">✓ Listo</span>
     </div>
   </div>
 
   <div class="metrics">
-    <div class="metric"><div class="m-label">Total registros</div><div class="m-val" id="m-total">0</div></div>
-    <div class="metric"><div class="m-label">FUAs entregadas</div><div class="m-val" id="m-fuas-e">0</div></div>
-    <div class="metric"><div class="m-label">FUAs auditadas</div><div class="m-val" id="m-fuas-a">0</div></div>
-    <div class="metric"><div class="m-label">Auditores activos</div><div class="m-val" id="m-audit">0</div></div>
+    <div class="metric"><div class="m-label">Registros</div><div class="m-val" id="m-total">0</div></div>
+    <div class="metric"><div class="m-label">FUAs Entregadas</div><div class="m-val" id="m-fuas-e">0</div></div>
+    <div class="metric"><div class="m-label">FUAs Auditadas</div><div class="m-val" id="m-fuas-a">0</div></div>
+    <div class="metric"><div class="m-label">Auditores</div><div class="m-val" id="m-audit">0</div></div>
   </div>
 
   <div class="resumen-general-container">
-    <div class="resumen-card">
-      <h3>📊 Resumen General por Auditor</h3>
-      <table class="resumen-table">
-        <thead>
-          <tr><th>Auditor</th><th class="num">Entregadas</th><th class="num">Auditadas</th><th class="num">%</th></tr>
-        </thead>
-        <tbody id="resumen-auditor-body"><tr><td colspan="4" class="empty">Cargando...</td></tr></tbody>
-      </table>
-    </div>
-    <div class="resumen-card">
-      <h3>📅 Resumen General por Mes</h3>
-      <table class="resumen-table">
-        <thead>
-          <tr><th>Mes</th><th class="num">Entregadas</th><th class="num">Auditadas</th><th class="num">%</th></tr>
-        </thead>
-        <tbody id="resumen-mes-body"><tr><td colspan="4" class="empty">Cargando...</td></tr></tbody>
-      </table>
-    </div>
+    <div class="resumen-card"><h3>📊 Por Auditor</h3><table class="resumen-table"><thead><tr><th>Auditor</th><th class="num">Entr.</th><th class="num">Aud.</th><th class="num">%</th></tr></thead><tbody id="resumen-auditor-body"></tbody></table></div>
+    <div class="resumen-card"><h3>📅 Por Mes</h3><table class="resumen-table"><thead><tr><th>Mes</th><th class="num">Entr.</th><th class="num">Aud.</th><th class="num">%</th></tr></thead><tbody id="resumen-mes-body"></tbody></table></div>
   </div>
 
-  <div class="avance-auditores" id="avanceAuditores">
-    <h3>📈 AVANCE DETALLADO POR AUDITOR</h3>
-    <div class="avance-grid" id="avanceGrid"><div class="empty">Cargando...</div></div>
-  </div>
+  <div class="avance-auditores" id="avanceAuditores"><h3>📈 AVANCE DETALLADO</h3><div class="avance-grid" id="avanceGrid"></div></div>
 
   <div class="reporte-mensual-card" id="reporteMensualCard">
-    <h3>📊 REPORTE MENSUAL DETALLADO</h3>
-    <div class="year-selector">
-      <label>Año:</label>
-      <select id="yearSelector" onchange="renderReporteMensual()"></select>
-    </div>
-    <div style="overflow-x:auto;">
-      <table class="reporte-mensual-table">
-        <thead id="reporteMensualHead"></thead>
-        <tbody id="reporteMensualBody"><tr><td colspan="26" class="empty">Selecciona un año</td></tr></tbody>
-      </table>
-    </div>
+    <h3>📊 REPORTE MENSUAL</h3>
+    <div class="year-selector"><label>Año:</label><select id="yearSelector" onchange="renderReporteMensual()"></select></div>
+    <div style="overflow-x:auto;"><table class="reporte-mensual-table"><thead id="reporteMensualHead"></thead><tbody id="reporteMensualBody"></tbody></table></div>
   </div>
 
   <div class="filter-row">
-    <select id="flt-auditor" onchange="renderTabla()"><option value="">Todos los auditores</option></select>
-    <select id="flt-cat" onchange="renderTabla()">
-      <option value="">Todas las categorías</option>
-      <option>Hospitalizacion</option><option>consulta externa</option><option>Emergencia</option><option>Apoyo al diagnostico</option>
-    </select>
+    <select id="flt-auditor" onchange="renderTabla()"><option value="">Todos</option></select>
+    <select id="flt-cat" onchange="renderTabla()"><option value="">Todas categorías</option><option>Hospitalizacion</option><option>consulta externa</option><option>Emergencia</option><option>Apoyo al diagnostico</option></select>
     <input type="text" id="flt-buscar" placeholder="Buscar..." oninput="renderTabla()" style="min-width:160px;">
   </div>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr><th>Auditor</th><th>FUAs ent.</th><th>Fecha ent.</th><th>FUAs aud.</th><th>Fecha dev.</th><th>Categoría</th><th>Acciones</th></tr>
-      </thead>
-      <tbody id="tabla-body"><tr><td colspan="7" class="empty">Cargando datos...</td></tr></tbody>
-    </table>
-  </div>
+  <div class="table-wrap"><table><thead><tr><th>Auditor</th><th>Entr.</th><th>F. Entrega</th><th>Aud.</th><th>F. Devol.</th><th>Categoría</th><th>Acciones</th></tr></thead><tbody id="tabla-body"></tbody></table></div>
 
 </div>
 
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-    <h3>🔐 Acceso de Administrador</h3>
-    <p>Ingresa la contraseña para activar el modo edición.</p>
+    <h3>🔐 Administrador</h3><p>Ingresa la contraseña:</p>
     <input type="password" id="modalPassword" placeholder="Contraseña" onkeypress="if(event.key==='Enter')verificarPassword()">
-    <div class="modal-error" id="modalError">❌ Contraseña incorrecta</div>
-    <div class="modal-buttons">
-      <button class="modal-btn-secondary" onclick="cerrarModal()">Cancelar</button>
-      <button class="modal-btn-primary" onclick="verificarPassword()">Acceder</button>
-    </div>
+    <div class="modal-error" id="modalError">❌ Incorrecta</div>
+    <div class="modal-buttons"><button class="modal-btn-secondary" onclick="cerrarModal()">Cancelar</button><button class="modal-btn-primary" onclick="verificarPassword()">Acceder</button></div>
   </div>
 </div>
 
@@ -344,388 +245,230 @@
 const ADMIN_PASSWORD = 'admin2026';
 const API_URL = document.getElementById('apiConfig').dataset.api;
 
-const BADGE = {
-  'Hospitalizacion': 'badge-hosp', 'consulta externa': 'badge-cons',
-  'Emergencia': 'badge-emer', 'Apoyo al diagnostico': 'badge-diag',
-  'NEO': 'badge-neo', 'Oxigeno': 'badge-oxi', 'otros cod prestacionales': 'badge-otros'
-};
-
+const BADGE = {'Hospitalizacion':'badge-hosp','consulta externa':'badge-cons','Emergencia':'badge-emer','Apoyo al diagnostico':'badge-diag','NEO':'badge-neo','Oxigeno':'badge-oxi','otros cod prestacionales':'badge-otros'};
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-let esAdmin = false;
-let editandoIdx = null;
-let datos = [];
+let esAdmin = false, editandoIdx = null, datos = [];
 
-// ============ FUNCIONES DE GOOGLE SHEETS ============
-async function cargarDatosDesdeSheets() {
-  updateSyncStatus('syncing', '🟡 Sincronizando...');
+// ============ API GOOGLE SHEETS ============
+async function cargarDatos() {
+  updateStatus('syncing','🟡 Cargando...');
   try {
-    const response = await fetch(API_URL);
-    const data = await response.json();
-    datos = data.map(d => ({
-      id: d.id,
-      auditor: d.auditor,
-      fuasE: parseInt(d.fuasE),
-      fechaE: d.fechaE,
-      fuasA: parseInt(d.fuasA),
-      fechaD: d.fechaD,
-      cat: d.cat
-    }));
-    updateSyncStatus('online', '🟢 Online');
+    const r = await fetch(API_URL);
+    const d = await r.json();
+    datos = d.map(x=>({id:x.id,auditor:x.auditor,fuasE:parseInt(x.fuasE),fechaE:x.fechaE,fuasA:parseInt(x.fuasA),fechaD:x.fechaD,cat:x.cat}));
+    updateStatus('online','🟢 Online');
     renderTodo();
-  } catch (error) {
-    console.error('Error al cargar datos:', error);
-    updateSyncStatus('offline', '🔴 Sin conexión');
-    // Cargar de localStorage como respaldo
-    const backup = localStorage.getItem('datosAuditoriaBackup');
-    if (backup) {
-      datos = JSON.parse(backup);
-      renderTodo();
-    }
+  } catch(e) {
+    updateStatus('offline','🔴 Sin conexión');
+    const b = localStorage.getItem('backupAuditoria');
+    if(b) { datos = JSON.parse(b); renderTodo(); }
   }
 }
 
-async function enviarASheets(action, registro) {
-  updateSyncStatus('syncing', '🟡 Guardando...');
+async function enviarAPI(accion, datos) {
+  updateStatus('syncing','🟡 Guardando...');
   try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action, ...registro })
-    });
-    await response.json();
-    updateSyncStatus('online', '🟢 Online');
-    // Guardar backup local
-    localStorage.setItem('datosAuditoriaBackup', JSON.stringify(datos));
+    await fetch(API_URL, {method:'POST',body:JSON.stringify({action:accion,...datos})});
+    updateStatus('online','🟢 Online');
+    localStorage.setItem('backupAuditoria',JSON.stringify(datos));
     return true;
-  } catch (error) {
-    console.error('Error al enviar:', error);
-    updateSyncStatus('offline', '🔴 Error al guardar');
-    return false;
-  }
+  } catch(e) { updateStatus('offline','🔴 Error'); return false; }
 }
 
-function updateSyncStatus(status, text) {
+function updateStatus(s,t) {
   const el = document.getElementById('syncStatus');
-  el.textContent = text;
-  el.className = 'sync-status';
-  if (status === 'online') el.classList.add('sync-online');
-  else if (status === 'offline') el.classList.add('sync-offline');
-  else if (status === 'syncing') el.classList.add('sync-syncing');
+  el.textContent = t; el.className = 'sync-status';
+  if(s==='online') el.classList.add('sync-online');
+  else if(s==='offline') el.classList.add('sync-offline');
+  else if(s==='syncing') el.classList.add('sync-syncing');
 }
 
-// ============ FUNCIONES DE LA APLICACIÓN ============
-function toggleAvanceAuditores() {
-  document.getElementById('avanceAuditores').classList.toggle('show');
-  if (document.getElementById('avanceAuditores').classList.contains('show')) {
-    renderAvanceAuditores();
-  }
-}
-
-function toggleReporteMensual() {
-  const card = document.getElementById('reporteMensualCard');
-  card.classList.toggle('show');
-  if (card.classList.contains('show')) {
-    actualizarSelectorAnios();
-    renderReporteMensual();
-  }
-}
-
-function toggleAdmin() {
-  if (esAdmin) { desactivarAdmin(); }
-  else { document.getElementById('modalOverlay').classList.add('show'); }
-}
-
-function verificarPassword() {
-  if (document.getElementById('modalPassword').value === ADMIN_PASSWORD) {
-    activarAdmin();
-    document.getElementById('modalOverlay').classList.remove('show');
-  } else {
-    document.getElementById('modalError').style.display = 'block';
-  }
-}
-
+// ============ ADMIN ============
+function toggleAdmin() { esAdmin ? desactivarAdmin() : (document.getElementById('modalOverlay').classList.add('show'),document.getElementById('modalPassword').value='',document.getElementById('modalError').style.display='none',setTimeout(()=>document.getElementById('modalPassword').focus(),100)); }
+function verificarPassword() { document.getElementById('modalPassword').value===ADMIN_PASSWORD ? (activarAdmin(),document.getElementById('modalOverlay').classList.remove('show')) : (document.getElementById('modalError').style.display='block'); }
 function cerrarModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+function activarAdmin() { esAdmin=true; document.getElementById('adminBtn').textContent='🔓 Salir'; document.getElementById('adminBtn').classList.add('active'); document.getElementById('adminIndicator').classList.add('show'); renderTabla(); }
+function desactivarAdmin() { esAdmin=false; cancelarEdicion(); document.getElementById('adminBtn').textContent='🔒 Admin'; document.getElementById('adminBtn').classList.remove('active'); document.getElementById('adminIndicator').classList.remove('show'); renderTabla(); }
 
-function activarAdmin() {
-  esAdmin = true;
-  document.getElementById('adminBtn').textContent = '🔓 Salir Admin';
-  document.getElementById('adminBtn').classList.add('active');
-  document.getElementById('adminIndicator').classList.add('show');
-  renderTabla();
+// ============ CRUD ============
+async function agregarRegistro() {
+  if(editandoIdx!==null) return;
+  const r = {
+    auditor: document.getElementById('f-auditor').value,
+    fuasE: parseInt(document.getElementById('f-fuas-e').value)||0,
+    fechaE: document.getElementById('f-fecha-e').value.split('-').reverse().join('/'),
+    fuasA: parseInt(document.getElementById('f-fuas-a').value)||0,
+    fechaD: document.getElementById('f-fecha-d').value.split('-').reverse().join('/'),
+    cat: document.getElementById('f-categoria').value
+  };
+  if(!r.auditor||!r.fuasE||!r.fechaE||!r.fuasA||!r.fechaD||!r.cat) { alert('Completa todos los campos'); return; }
+  await enviarAPI('add',r);
+  limpiarForm();
+  await cargarDatos();
+  showOk('✓ Guardado');
 }
 
-function desactivarAdmin() {
-  esAdmin = false;
-  cancelarEdicion();
-  document.getElementById('adminBtn').textContent = '🔒 Modo Admin';
-  document.getElementById('adminBtn').classList.remove('active');
-  document.getElementById('adminIndicator').classList.remove('show');
-  renderTabla();
+async function eliminar(idx) {
+  if(!esAdmin) return;
+  if(confirm('¿Eliminar este registro?')) {
+    await enviarAPI('delete',{id:datos[idx].id});
+    await cargarDatos();
+  }
 }
 
 function editarRegistro(idx) {
-  if (!esAdmin) return;
-  editandoIdx = idx;
-  const d = datos[idx];
-  document.getElementById('f-auditor').value = d.auditor;
-  document.getElementById('f-fuas-e').value = d.fuasE;
-  document.getElementById('f-fuas-a').value = d.fuasA;
-  document.getElementById('f-categoria').value = d.cat;
-  const fe = d.fechaE.split('/');
-  document.getElementById('f-fecha-e').value = `${fe[2]}-${fe[1]}-${fe[0]}`;
-  const fd = d.fechaD.split('/');
-  document.getElementById('f-fecha-d').value = `${fd[2]}-${fd[1]}-${fd[0]}`;
-  document.getElementById('formTitle').textContent = '✏️ Editando registro';
-  document.getElementById('btnAdd').style.display = 'none';
-  document.getElementById('btnUpdate').style.display = 'inline-block';
-  document.getElementById('btnCancel').style.display = 'inline-block';
+  if(!esAdmin) return;
+  editandoIdx=idx;
+  const d=datos[idx];
+  document.getElementById('f-auditor').value=d.auditor;
+  document.getElementById('f-fuas-e').value=d.fuasE;
+  document.getElementById('f-fuas-a').value=d.fuasA;
+  document.getElementById('f-categoria').value=d.cat;
+  if(d.fechaE){const fe=d.fechaE.split('/');document.getElementById('f-fecha-e').value=`${fe[2]}-${fe[1]}-${fe[0]}`;}
+  if(d.fechaD){const fd=d.fechaD.split('/');document.getElementById('f-fecha-d').value=`${fd[2]}-${fd[1]}-${fd[0]}`;}
+  document.getElementById('formTitle').textContent='✏️ Editando';
+  document.getElementById('btnAdd').style.display='none';
+  document.getElementById('btnUpdate').style.display='inline-block';
+  document.getElementById('btnCancel').style.display='inline-block';
   renderTabla();
 }
 
 async function actualizarRegistro() {
-  if (editandoIdx === null) return;
-  const registro = {
+  if(editandoIdx===null) return;
+  const r = {
     id: datos[editandoIdx].id,
     auditor: document.getElementById('f-auditor').value,
-    fuasE: parseInt(document.getElementById('f-fuas-e').value),
-    fechaE: fmtDate(document.getElementById('f-fecha-e').value),
-    fuasA: parseInt(document.getElementById('f-fuas-a').value),
-    fechaD: fmtDate(document.getElementById('f-fecha-d').value),
+    fuasE: parseInt(document.getElementById('f-fuas-e').value)||0,
+    fechaE: document.getElementById('f-fecha-e').value.split('-').reverse().join('/'),
+    fuasA: parseInt(document.getElementById('f-fuas-a').value)||0,
+    fechaD: document.getElementById('f-fecha-d').value.split('-').reverse().join('/'),
     cat: document.getElementById('f-categoria').value
   };
-  await enviarASheets('update', registro);
+  await enviarAPI('update',r);
   cancelarEdicion();
-  await cargarDatosDesdeSheets();
-  showOk('✓ Registro actualizado');
+  await cargarDatos();
+  showOk('✓ Actualizado');
 }
 
 function cancelarEdicion() {
-  editandoIdx = null;
-  ['f-auditor','f-fuas-e','f-fecha-e','f-fuas-a','f-fecha-d','f-categoria'].forEach(id => {
-    const el = document.getElementById(id);
-    el.tagName === 'SELECT' ? (el.selectedIndex = 0) : (el.value = '');
-  });
-  document.getElementById('formTitle').textContent = 'Agregar registro';
-  document.getElementById('btnAdd').style.display = 'inline-block';
-  document.getElementById('btnUpdate').style.display = 'none';
-  document.getElementById('btnCancel').style.display = 'none';
+  editandoIdx=null; limpiarForm();
+  document.getElementById('formTitle').textContent='Agregar registro';
+  document.getElementById('btnAdd').style.display='inline-block';
+  document.getElementById('btnUpdate').style.display='none';
+  document.getElementById('btnCancel').style.display='none';
   renderTabla();
 }
 
-async function agregarRegistro() {
-  if (editandoIdx !== null) return;
-  const registro = {
-    auditor: document.getElementById('f-auditor').value,
-    fuasE: parseInt(document.getElementById('f-fuas-e').value),
-    fechaE: fmtDate(document.getElementById('f-fecha-e').value),
-    fuasA: parseInt(document.getElementById('f-fuas-a').value),
-    fechaD: fmtDate(document.getElementById('f-fecha-d').value),
-    cat: document.getElementById('f-categoria').value
-  };
-  if (!registro.auditor || !registro.fuasE || !registro.fechaE || !registro.fuasA || !registro.fechaD || !registro.cat) {
-    alert('Completa todos los campos.'); return;
-  }
-  await enviarASheets('add', registro);
-  ['f-auditor','f-fuas-e','f-fecha-e','f-fuas-a','f-fecha-d','f-categoria'].forEach(id => {
-    const el = document.getElementById(id);
-    el.tagName === 'SELECT' ? (el.selectedIndex = 0) : (el.value = '');
+function limpiarForm() {
+  ['f-auditor','f-fuas-e','f-fecha-e','f-fuas-a','f-fecha-d','f-categoria'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.tagName==='SELECT' ? (el.selectedIndex=0) : (el.value='');
   });
-  await cargarDatosDesdeSheets();
-  showOk('✓ Registro guardado');
 }
 
-async function eliminar(idx) {
-  if (!esAdmin) return;
-  if (confirm('¿Eliminar este registro?')) {
-    await enviarASheets('delete', { id: datos[idx].id });
-    await cargarDatosDesdeSheets();
-  }
-}
+function showOk(m) { const o=document.getElementById('ok-msg'); o.textContent=m; o.style.display='inline-block'; setTimeout(()=>o.style.display='none',2500); }
 
-function showOk(msg) {
-  const ok = document.getElementById('ok-msg');
-  ok.textContent = msg;
-  ok.style.display = 'inline-block';
-  setTimeout(() => { ok.style.display = 'none'; }, 2500);
-}
-
-function fmtDate(val) {
-  if (!val) return '';
-  const [y,m,d] = val.split('-');
-  return d+'/'+m+'/'+y;
-}
-
-// ============ RENDERIZADO ============
+// ============ RENDER ============
 function renderResumenGeneral() {
-  const resumenAud = {};
-  const resumenMes = {};
-  datos.forEach(d => {
-    if (!resumenAud[d.auditor]) resumenAud[d.auditor] = { e: 0, a: 0 };
-    resumenAud[d.auditor].e += d.fuasE;
-    resumenAud[d.auditor].a += d.fuasA;
-    
-    const p = d.fechaE.split('/');
-    if (p.length === 3) {
-      const clave = `${MESES[parseInt(p[1])-1]} ${p[2]}`;
-      const orden = `${p[2]}-${p[1]}`;
-      if (!resumenMes[clave]) resumenMes[clave] = { e: 0, a: 0, orden };
-      resumenMes[clave].e += d.fuasE;
-      resumenMes[clave].a += d.fuasA;
+  const rA={},rM={};
+  datos.forEach(d=>{
+    if(!rA[d.auditor]) rA[d.auditor]={e:0,a:0};
+    rA[d.auditor].e+=d.fuasE; rA[d.auditor].a+=d.fuasA;
+    const p=d.fechaE.split('/');
+    if(p.length===3){
+      const c=`${MESES[parseInt(p[1])-1]} ${p[2]}`;
+      if(!rM[c]) rM[c]={e:0,a:0,o:`${p[2]}-${String(parseInt(p[1])).padStart(2,'0')}`};
+      rM[c].e+=d.fuasE; rM[c].a+=d.fuasA;
     }
   });
   
-  // Auditor
-  const auds = Object.keys(resumenAud).sort();
-  let htmlA = '', te = 0, ta = 0;
-  auds.forEach(a => {
-    const r = resumenAud[a];
-    const pct = r.e > 0 ? ((r.a/r.e)*100).toFixed(1) : 0;
-    const color = pct >= 90 ? '#27ae60' : pct >= 70 ? '#f39c12' : '#e74c3c';
-    te += r.e; ta += r.a;
-    htmlA += `<tr><td><strong>${a}</strong></td><td class="num">${r.e.toLocaleString()}</td><td class="num">${r.a.toLocaleString()}</td><td class="num"><span style="color:${color};font-weight:600;">${pct}%</span></td></tr>`;
+  let hA='',te=0,ta=0;
+  Object.keys(rA).sort().forEach(a=>{
+    const r=rA[a]; te+=r.e; ta+=r.a;
+    const pct=r.e>0?((r.a/r.e)*100).toFixed(1):0;
+    hA+=`<tr><td><strong>${a}</strong></td><td class="num">${r.e.toLocaleString()}</td><td class="num">${r.a.toLocaleString()}</td><td class="num"><span style="color:${pct>=90?'#27ae60':pct>=70?'#f39c12':'#e74c3c'};font-weight:600;">${pct}%</span></td></tr>`;
   });
-  const pctT = te > 0 ? ((ta/te)*100).toFixed(1) : 0;
-  htmlA += `<tr class="total-row"><td><strong>TOTAL</strong></td><td class="num">${te.toLocaleString()}</td><td class="num">${ta.toLocaleString()}</td><td class="num">${pctT}%</td></tr>`;
-  document.getElementById('resumen-auditor-body').innerHTML = htmlA || '<tr><td colspan="4" class="empty">Sin datos</td></tr>';
+  hA+=`<tr class="total-row"><td><strong>TOTAL</strong></td><td class="num">${te.toLocaleString()}</td><td class="num">${ta.toLocaleString()}</td><td class="num">${te>0?((ta/te)*100).toFixed(1):0}%</td></tr>`;
+  document.getElementById('resumen-auditor-body').innerHTML=hA||'<tr><td colspan="4" class="empty">Sin datos</td></tr>';
   
-  // Mes
-  const meses = Object.keys(resumenMes).sort((a,b) => resumenMes[a].orden.localeCompare(resumenMes[b].orden));
-  let htmlM = '', tme = 0, tma = 0;
-  meses.forEach(m => {
-    const r = resumenMes[m];
-    const pct = r.e > 0 ? ((r.a/r.e)*100).toFixed(1) : 0;
-    const color = pct >= 90 ? '#27ae60' : pct >= 70 ? '#f39c12' : '#e74c3c';
-    tme += r.e; tma += r.a;
-    htmlM += `<tr><td><strong>${m}</strong></td><td class="num">${r.e.toLocaleString()}</td><td class="num">${r.a.toLocaleString()}</td><td class="num"><span style="color:${color};font-weight:600;">${pct}%</span></td></tr>`;
+  let hM='',tme=0,tma=0;
+  Object.keys(rM).sort((a,b)=>rM[a].o.localeCompare(rM[b].o)).forEach(m=>{
+    const r=rM[m]; tme+=r.e; tma+=r.a;
+    const pct=r.e>0?((r.a/r.e)*100).toFixed(1):0;
+    hM+=`<tr><td><strong>${m}</strong></td><td class="num">${r.e.toLocaleString()}</td><td class="num">${r.a.toLocaleString()}</td><td class="num"><span style="color:${pct>=90?'#27ae60':pct>=70?'#f39c12':'#e74c3c'};font-weight:600;">${pct}%</span></td></tr>`;
   });
-  const pctTM = tme > 0 ? ((tma/tme)*100).toFixed(1) : 0;
-  htmlM += `<tr class="total-row"><td><strong>TOTAL</strong></td><td class="num">${tme.toLocaleString()}</td><td class="num">${tma.toLocaleString()}</td><td class="num">${pctTM}%</td></tr>`;
-  document.getElementById('resumen-mes-body').innerHTML = htmlM || '<tr><td colspan="4" class="empty">Sin datos</td></tr>';
+  hM+=`<tr class="total-row"><td><strong>TOTAL</strong></td><td class="num">${tme.toLocaleString()}</td><td class="num">${tma.toLocaleString()}</td><td class="num">${tme>0?((tma/tme)*100).toFixed(1):0}%</td></tr>`;
+  document.getElementById('resumen-mes-body').innerHTML=hM||'<tr><td colspan="4" class="empty">Sin datos</td></tr>';
 }
 
-function renderAvanceAuditores() {
-  const resumen = {};
-  datos.forEach(d => {
-    if (!resumen[d.auditor]) resumen[d.auditor] = { e: 0, a: 0, cats: {} };
-    resumen[d.auditor].e += d.fuasE;
-    resumen[d.auditor].a += d.fuasA;
-    resumen[d.auditor].cats[d.cat] = (resumen[d.auditor].cats[d.cat] || 0) + 1;
-  });
-  const auds = Object.keys(resumen).sort();
-  const maxE = Math.max(...auds.map(a => resumen[a].e), 1);
-  
-  document.getElementById('avanceGrid').innerHTML = auds.map(a => {
-    const r = resumen[a];
-    const pct = r.e > 0 ? parseFloat(((r.a/r.e)*100).toFixed(1)) : 0;
-    let clase = pct >= 90 ? 'alto' : pct >= 70 ? 'medio' : 'bajo';
-    return `
-      <div class="avance-card">
-        <div class="avance-header">
-          <span class="avance-nombre">👤 ${a}</span>
-          <span class="avance-porcentaje ${clase}">${pct}%</span>
-        </div>
-        <div class="avance-numeros">
-          <span class="entregadas">📥 ${r.e.toLocaleString()}</span>
-          <span class="auditadas">📤 ${r.a.toLocaleString()}</span>
-        </div>
-        <div class="barra-progreso"><div class="relleno ${clase}" style="width:${(r.e/maxE)*100}%"></div></div>
-        <div class="avance-detalle">
-          ${r.e - r.a > 0 ? `⚠️ Pendiente: ${(r.e-r.a).toLocaleString()}` : '✅ Al día'} | 📂 ${Object.keys(r.cats).length}/7
-        </div>
-      </div>`;
-  }).join('') || '<div class="empty">Sin datos</div>';
+function toggleAvanceAuditores() {
+  document.getElementById('avanceAuditores').classList.toggle('show');
+  if(document.getElementById('avanceAuditores').classList.contains('show')) renderAvance();
 }
 
-function actualizarSelectorAnios() {
-  const anios = new Set();
-  datos.forEach(d => { const p = d.fechaE.split('/'); if(p.length===3) anios.add(p[2]); });
-  const sel = document.getElementById('yearSelector');
-  sel.innerHTML = [...anios].sort((a,b)=>b-a).map(a => `<option>${a}</option>`).join('') || '<option>2026</option>';
+function renderAvance() {
+  const res={};
+  datos.forEach(d=>{
+    if(!res[d.auditor]) res[d.auditor]={e:0,a:0,cats:{}};
+    res[d.auditor].e+=d.fuasE; res[d.auditor].a+=d.fuasA;
+    res[d.auditor].cats[d.cat]=(res[d.auditor].cats[d.cat]||0)+1;
+  });
+  const auds=Object.keys(res).sort(), maxE=Math.max(...auds.map(a=>res[a].e),1);
+  document.getElementById('avanceGrid').innerHTML=auds.length===0?'<div class="empty">Sin datos</div>':auds.map(a=>{
+    const r=res[a], pct=r.e>0?parseFloat(((r.a/r.e)*100).toFixed(1)):0, cl=pct>=90?'alto':pct>=70?'medio':'bajo';
+    return `<div class="avance-card"><div class="avance-header"><span class="avance-nombre">👤 ${a}</span><span class="avance-porcentaje ${cl}">${pct}%</span></div><div class="avance-numeros"><span class="entregadas">📥 ${r.e.toLocaleString()}</span><span class="auditadas">📤 ${r.a.toLocaleString()}</span></div><div class="barra-progreso"><div class="relleno ${cl}" style="width:${(r.e/maxE)*100}%"></div></div><div class="avance-detalle">${r.e-r.a>0?`⚠️ Pendiente: ${(r.e-r.a).toLocaleString()}`:'✅ Al día'} | 📂 ${Object.keys(r.cats).length}/7</div></div>`;
+  }).join('');
+}
+
+function toggleReporteMensual() {
+  document.getElementById('reporteMensualCard').classList.toggle('show');
+  if(document.getElementById('reporteMensualCard').classList.contains('show')){ actSelectorAnios(); renderReporteMensual(); }
+}
+
+function actSelectorAnios() {
+  const anios=new Set();
+  datos.forEach(d=>{const p=d.fechaE.split('/'); if(p.length===3) anios.add(p[2]);});
+  document.getElementById('yearSelector').innerHTML=[...anios].sort((a,b)=>b-a).map(a=>`<option>${a}</option>`).join('')||'<option>2026</option>';
 }
 
 function renderReporteMensual() {
-  const anio = document.getElementById('yearSelector').value;
-  const reporte = {};
-  datos.forEach(d => {
-    const p = d.fechaE.split('/');
-    if(p.length===3 && p[2]===anio) {
-      const mes = parseInt(p[1])-1;
-      if(!reporte[d.auditor]) reporte[d.auditor] = Array(12).fill(null).map(()=>({e:0,a:0}));
-      reporte[d.auditor][mes].e += d.fuasE;
-      reporte[d.auditor][mes].a += d.fuasA;
-    }
-  });
-  const auds = Object.keys(reporte).sort();
-  
-  document.getElementById('reporteMensualHead').innerHTML = 
-    '<tr><th>Auditor</th>'+MESES.map(m=>`<th colspan="2">${m.substring(0,3)}</th>`).join('')+'<th colspan="2">TOTAL</th></tr>'+
-    '<tr><th></th>'+MESES.map(()=>'<th>E</th><th>A</th>').join('')+'<th>E</th><th>A</th></tr>';
-  
-  let html = '';
-  auds.forEach(a => {
-    html += `<tr><td><strong>${a}</strong></td>`;
-    let te=0, ta=0;
-    for(let m=0;m<12;m++) {
-      const d = reporte[a][m];
-      te+=d.e; ta+=d.a;
-      const pct = d.e>0?(d.a/d.e)*100:0;
-      const cls = pct>=90?'celda-alta':pct>=70?'celda-media':(d.e>0||d.a>0)?'celda-baja':'';
-      html += `<td class="num ${cls}">${d.e||'-'}</td><td class="num ${cls}">${d.a||'-'}</td>`;
-    }
-    const pctT = te>0?((ta/te)*100).toFixed(1):0;
-    html += `<td class="num" style="font-weight:700;">${te.toLocaleString()}</td><td class="num" style="font-weight:700;">${ta.toLocaleString()} (${pctT}%)</td></tr>`;
-  });
-  document.getElementById('reporteMensualBody').innerHTML = html || `<tr><td colspan="26" class="empty">Sin datos para ${anio}</td></tr>`;
+  const anio=document.getElementById('yearSelector').value, rep={};
+  datos.forEach(d=>{const p=d.fechaE.split('/'); if(p.length===3&&p[2]===anio){const m=parseInt(p[1])-1; if(!rep[d.auditor]) rep[d.auditor]=Array(12).fill(null).map(()=>({e:0,a:0})); rep[d.auditor][m].e+=d.fuasE; rep[d.auditor][m].a+=d.fuasA;}});
+  const auds=Object.keys(rep).sort();
+  document.getElementById('reporteMensualHead').innerHTML='<tr><th>Auditor</th>'+MESES.map(m=>`<th colspan="2">${m.substring(0,3)}</th>`).join('')+'<th colspan="2">TOTAL</th></tr><tr><th></th>'+MESES.map(()=>'<th>E</th><th>A</th>').join('')+'<th>E</th><th>A</th></tr>';
+  let html='';
+  auds.forEach(a=>{html+=`<tr><td><strong>${a}</strong></td>`; let te=0,ta=0; for(let m=0;m<12;m++){const d=rep[a][m]; te+=d.e; ta+=d.a; const pct=d.e>0?(d.a/d.e)*100:0, cls=pct>=90?'celda-alta':pct>=70?'celda-media':(d.e>0||d.a>0)?'celda-baja':''; html+=`<td class="num ${cls}">${d.e||'-'}</td><td class="num ${cls}">${d.a||'-'}</td>`;} html+=`<td class="num" style="font-weight:700;">${te.toLocaleString()}</td><td class="num" style="font-weight:700;">${ta.toLocaleString()} (${te>0?((ta/te)*100).toFixed(1):0}%)</td></tr>`;});
+  document.getElementById('reporteMensualBody').innerHTML=html||`<tr><td colspan="26" class="empty">Sin datos para ${anio}</td></tr>`;
 }
 
 function renderTabla() {
-  const fa = document.getElementById('flt-auditor').value;
-  const fc = document.getElementById('flt-cat').value;
-  const fb = document.getElementById('flt-buscar').value.toLowerCase();
-  const fil = datos.filter(d => (!fa||d.auditor===fa) && (!fc||d.cat===fc) && (!fb||d.auditor.toLowerCase().includes(fb)||d.cat.toLowerCase().includes(fb)));
-  
-  document.getElementById('tabla-body').innerHTML = fil.length === 0 ? 
-    '<tr><td colspan="7" class="empty">Sin resultados</td></tr>' :
-    fil.map((d,i) => {
-      const origIdx = datos.indexOf(d);
-      return `<tr class="${editandoIdx===origIdx?'editing':''}">
-        <td>${d.auditor}</td><td class="num">${d.fuasE}</td><td>${d.fechaE}</td>
-        <td class="num">${d.fuasA}</td><td>${d.fechaD}</td>
-        <td><span class="badge ${BADGE[d.cat]||''}">${d.cat}</span></td>
-        <td>${esAdmin ? `<button class="btn-edit show" onclick="editarRegistro(${origIdx})">✏️</button><button class="btn-del" onclick="eliminar(${origIdx})">✕</button>` : ''}</td>
-      </tr>`;
-    }).join('');
-  
-  document.getElementById('m-total').textContent = datos.length;
-  document.getElementById('m-fuas-e').textContent = datos.reduce((s,d)=>s+d.fuasE,0).toLocaleString();
-  document.getElementById('m-fuas-a').textContent = datos.reduce((s,d)=>s+d.fuasA,0).toLocaleString();
-  document.getElementById('m-audit').textContent = new Set(datos.map(d=>d.auditor)).size;
-  
-  // Actualizar filtro
-  const sel = document.getElementById('flt-auditor');
-  const auds = [...new Set(datos.map(d=>d.auditor))].sort();
-  sel.innerHTML = '<option value="">Todos</option>'+auds.map(a=>`<option>${a}</option>`).join('');
+  const fa=document.getElementById('flt-auditor').value, fc=document.getElementById('flt-cat').value, fb=document.getElementById('flt-buscar').value.toLowerCase();
+  const fil=datos.filter(d=>(!fa||d.auditor===fa)&&(!fc||d.cat===fc)&&(!fb||d.auditor.toLowerCase().includes(fb)||d.cat.toLowerCase().includes(fb)));
+  document.getElementById('tabla-body').innerHTML=fil.length===0?'<tr><td colspan="7" class="empty">Sin resultados</td></tr>':fil.map((d,i)=>{const oi=datos.indexOf(d); return `<tr class="${editandoIdx===oi?'editing':''}"><td>${d.auditor}</td><td class="num">${d.fuasE}</td><td>${d.fechaE}</td><td class="num">${d.fuasA}</td><td>${d.fechaD}</td><td><span class="badge ${BADGE[d.cat]||''}">${d.cat}</span></td><td>${esAdmin?`<button class="btn-edit show" onclick="editarRegistro(${oi})">✏️</button><button class="btn-del" onclick="eliminar(${oi})">✕</button>`:''}</td></tr>`;}).join('');
+  document.getElementById('m-total').textContent=datos.length;
+  document.getElementById('m-fuas-e').textContent=datos.reduce((s,d)=>s+d.fuasE,0).toLocaleString();
+  document.getElementById('m-fuas-a').textContent=datos.reduce((s,d)=>s+d.fuasA,0).toLocaleString();
+  document.getElementById('m-audit').textContent=new Set(datos.map(d=>d.auditor)).size;
+  const sel=document.getElementById('flt-auditor'), act=sel.value, auds=[...new Set(datos.map(d=>d.auditor))].sort();
+  sel.innerHTML='<option value="">Todos</option>'+auds.map(a=>`<option${a===act?' selected':''}>${a}</option>`).join('');
 }
 
 function renderTodo() {
   renderTabla();
   renderResumenGeneral();
-  if(document.getElementById('avanceAuditores').classList.contains('show')) renderAvanceAuditores();
-  if(document.getElementById('reporteMensualCard').classList.contains('show')) { actualizarSelectorAnios(); renderReporteMensual(); }
+  if(document.getElementById('avanceAuditores').classList.contains('show')) renderAvance();
+  if(document.getElementById('reporteMensualCard').classList.contains('show')){ actSelectorAnios(); renderReporteMensual(); }
 }
 
 function exportarCSV() {
-  const csv = [['Auditor','FUAs Entregadas','Fecha Entrega','FUAs Auditadas','Fecha Devolución','Categoría'].join(',')]
-    .concat(datos.map(d => `"${d.auditor}","${d.fuasE}","${d.fechaE}","${d.fuasA}","${d.fechaD}","${d.cat}"`)).join('\n');
-  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'reporte_auditoria.csv';
-  a.click();
+  const csv=[['Auditor','FUAs Entregadas','Fecha Entrega','FUAs Auditadas','Fecha Devolución','Categoría'].join(',')].concat(datos.map(d=>`"${d.auditor}","${d.fuasE}","${d.fechaE}","${d.fuasA}","${d.fechaD}","${d.cat}"`)).join('\n');
+  const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}), a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download='reporte_auditoria.csv'; a.click();
 }
 
 // Iniciar
-cargarDatosDesdeSheets();
+cargarDatos();
 </script>
 </body>
 </html>
