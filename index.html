@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporte de Auditoría - Online</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f4f6f8; color: #1a1a1a; }
+
+  .app { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+  .header { text-align: center; padding: 1.25rem; background: #fff; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 1.5rem; position: relative; }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.08em; color: #1a1a1a; }
+  
+  .top-bar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 0.5rem; flex-wrap: wrap; }
+  
+  .sync-status { font-size: 11px; padding: 4px 10px; border-radius: 99px; font-weight: 600; }
+  .sync-online { background: #dcfce7; color: #14532d; }
+  .sync-offline { background: #fee2e2; color: #7f1d1d; }
+  .sync-syncing { background: #fef3c7; color: #78350f; }
+  
+  .admin-btn { 
+    padding: 6px 15px; 
+    background: #6c5ce7; 
+    color: white; 
+    border: none; 
+    border-radius: 6px; 
+    font-size: 12px; 
+    font-weight: 600; 
+    cursor: pointer; 
+  }
+  .admin-btn:hover { background: #5b4cdb; }
+  .admin-btn.active { background: #e74c3c; }
+  .admin-btn.active:hover { background: #c0392b; }
+  
+  .admin-indicator {
+    display: none;
+    font-size: 11px;
+    color: #e74c3c;
+    margin-top: 5px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .admin-indicator.show { display: block; }
+
+  .form-card { background: #f0f4f8; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid #d0d7de; }
+  .section-title { font-size: 12px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 12px; color: #444; font-weight: 600; }
+  .field input, .field select {
+    font-size: 14px; padding: 7px 10px;
+    border-radius: 6px; border: 1px solid #bbb;
+    background: #fff; color: #1a1a1a; width: 100%;
+  }
+  .field input:focus, .field select:focus { outline: none; border-color: #185FA5; box-shadow: 0 0 0 2px #185FA522; }
+
+  .btn-row { display: flex; align-items: center; gap: 12px; margin-top: 1rem; flex-wrap: wrap; }
+  .btn-add { padding: 8px 22px; background: #185FA5; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-add:hover { background: #0C447C; }
+  .btn-export-pdf { padding: 8px 18px; background: #c0392b; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-export-pdf:hover { background: #96281b; }
+  .btn-export-csv { padding: 8px 18px; background: #27ae60; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-export-csv:hover { background: #1e8449; }
+  .btn-update { padding: 8px 22px; background: #6c5ce7; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; display: none; }
+  .btn-update:hover { background: #5b4cdb; }
+  .btn-cancel { padding: 8px 18px; background: #95a5a6; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; display: none; }
+  .btn-cancel:hover { background: #7f8c8d; }
+  .btn-view-report { padding: 8px 18px; background: #8e44ad; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-view-report:hover { background: #7d3c98; }
+  .btn-toggle-avance { padding: 8px 18px; background: #2980b9; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-toggle-avance:hover { background: #2471a3; }
+  .btn-refresh { padding: 8px 18px; background: #16a085; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-refresh:hover { background: #138d75; }
+  .success-msg { font-size: 12px; color: #27ae60; background: #eafaf1; padding: 4px 10px; border-radius: 6px; display: none; }
+
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .metric { background: #fff; border-radius: 8px; padding: 0.85rem 1rem; border: 1px solid #ddd; }
+  .metric .m-label { font-size: 11px; color: #888; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .metric .m-val { font-size: 24px; font-weight: 700; color: #185FA5; }
+
+  .resumen-general-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+  .resumen-card { background: #fff; border-radius: 10px; border: 1px solid #ddd; padding: 1rem; overflow-x: auto; }
+  .resumen-card h3 { font-size: 14px; font-weight: 700; color: #185FA5; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .resumen-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .resumen-table th { background: #e8f0f7; color: #444; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px; text-align: left; border-bottom: 1px solid #d0d7de; }
+  .resumen-table td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+  .resumen-table tr:last-child td { border-bottom: none; }
+  .resumen-table tr:hover { background: #f0f4f8; }
+  .resumen-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .resumen-table .total-row { font-weight: 700; background: #f8fafc; }
+
+  .avance-auditores { background: #fff; border-radius: 10px; border: 1px solid #ddd; padding: 1.25rem; margin-bottom: 1.5rem; display: none; }
+  .avance-auditores.show { display: block; }
+  .avance-auditores h3 { font-size: 14px; font-weight: 700; color: #185FA5; margin-bottom: 1rem; text-transform: uppercase; }
+  .avance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .avance-card { background: #f8fafc; border-radius: 8px; padding: 1rem; border: 1px solid #e2e8f0; }
+  .avance-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-color: #185FA5; }
+  .avance-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+  .avance-nombre { font-weight: 700; font-size: 15px; color: #1a1a1a; }
+  .avance-porcentaje { font-weight: 700; font-size: 18px; }
+  .avance-porcentaje.alto { color: #27ae60; }
+  .avance-porcentaje.medio { color: #f39c12; }
+  .avance-porcentaje.bajo { color: #e74c3c; }
+  .avance-numeros { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 12px; color: #666; }
+  .avance-numeros span { font-weight: 600; }
+  .avance-numeros .entregadas { color: #185FA5; }
+  .avance-numeros .auditadas { color: #27ae60; }
+  .barra-progreso { width: 100%; height: 10px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
+  .barra-progreso .relleno { height: 100%; border-radius: 99px; transition: width 0.5s ease; }
+  .barra-progreso .relleno.alto { background: #27ae60; }
+  .barra-progreso .relleno.medio { background: #f39c12; }
+  .barra-progreso .relleno.bajo { background: #e74c3c; }
+  .avance-detalle { margin-top: 0.5rem; font-size: 11px; color: #888; text-align: right; }
+
+  .reporte-mensual-card { background: #fff; border-radius: 10px; border: 1px solid #ddd; padding: 1.5rem; margin-bottom: 1.5rem; overflow-x: auto; display: none; }
+  .reporte-mensual-card.show { display: block; }
+  .reporte-mensual-card h3 { font-size: 16px; font-weight: 700; color: #185FA5; margin-bottom: 1rem; text-transform: uppercase; text-align: center; }
+  .reporte-mensual-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .reporte-mensual-table th { background: #185FA5; color: white; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 10px 8px; text-align: center; border: 1px solid #0C447C; white-space: nowrap; }
+  .reporte-mensual-table td { padding: 8px; border: 1px solid #d0d7de; text-align: center; }
+  .reporte-mensual-table .num { font-variant-numeric: tabular-nums; }
+  .reporte-mensual-table .total-row { font-weight: 700; background: #f8fafc; }
+  .celda-alta { color: #27ae60; font-weight: 600; }
+  .celda-media { color: #f39c12; font-weight: 600; }
+  .celda-baja { color: #e74c3c; font-weight: 600; }
+
+  .filter-row { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+  .filter-row input, .filter-row select { font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid #bbb; background: #fff; color: #1a1a1a; }
+
+  .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #ddd; background: #fff; margin-bottom: 1.5rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: #e8f0f7; color: #444; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 12px; text-align: left; border-bottom: 1px solid #d0d7de; }
+  tbody tr { border-bottom: 1px solid #eee; }
+  tbody tr:hover { background: #f0f4f8; }
+  td { padding: 9px 12px; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+  .badge-hosp { background: #dbeafe; color: #1e3a8a; }
+  .badge-cons { background: #dcfce7; color: #14532d; }
+  .badge-emer { background: #fee2e2; color: #7f1d1d; }
+  .badge-diag { background: #fef3c7; color: #78350f; }
+  .badge-neo { background: #f3e8ff; color: #581c87; }
+  .badge-oxi { background: #e0f2fe; color: #075985; }
+  .badge-otros { background: #f5f5f4; color: #44403c; }
+
+  .btn-del { background: none; border: none; color: #aaa; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
+  .btn-del:hover { background: #fee2e2; color: #c0392b; }
+  .btn-edit { background: none; border: none; color: #aaa; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; margin-right: 4px; display: none; }
+  .btn-edit:hover { background: #e8f0f7; color: #185FA5; }
+  .btn-edit.show { display: inline-block; }
+  tr.editing { background: #fff9c4 !important; }
+  .empty { text-align: center; padding: 2rem; color: #aaa; font-size: 13px; }
+
+  .year-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+  .year-selector label { font-size: 13px; font-weight: 600; color: #555; }
+  .year-selector select { padding: 6px 12px; border-radius: 6px; border: 1px solid #bbb; font-size: 14px; font-weight: 600; }
+
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: white; border-radius: 12px; padding: 2rem; width: 90%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+  .modal h3 { margin-bottom: 1rem; color: #1a1a1a; font-size: 18px; }
+  .modal p { font-size: 13px; color: #666; margin-bottom: 1rem; }
+  .modal input { width: 100%; padding: 10px; border: 1px solid #bbb; border-radius: 6px; font-size: 14px; margin-bottom: 1rem; }
+  .modal input:focus { outline: none; border-color: #6c5ce7; box-shadow: 0 0 0 2px #6c5ce722; }
+  .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+  .modal-buttons button { padding: 8px 20px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .modal-btn-primary { background: #6c5ce7; color: white; }
+  .modal-btn-primary:hover { background: #5b4cdb; }
+  .modal-btn-secondary { background: #ddd; color: #333; }
+  .modal-btn-secondary:hover { background: #ccc; }
+  .modal-error { color: #e74c3c; font-size: 12px; margin-bottom: 1rem; display: none; }
+
+  @media (max-width: 768px) {
+    .resumen-general-container { grid-template-columns: 1fr; }
+    .top-bar { flex-direction: column; align-items: flex-end; }
+  }
+
+  @media print {
+    .btn-row, .filter-row, .btn-del, .btn-edit, .form-card, .admin-btn, 
+    .admin-indicator, .modal-overlay, .top-bar, .btn-view-report, .btn-toggle-avance,
+    .btn-refresh, .sync-status { display: none !important; }
+    body { background: #fff; }
+    .app { padding: 0; }
+    .avance-auditores { display: block !important; }
+    .reporte-mensual-card { display: block !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ⚠️ CAMBIA ESTA URL POR LA QUE TE DA GOOGLE APPS SCRIPT -->
+  <div id="apiConfig" data-api="https://script.google.com/macros/s/AKfycbxG-9p7a_QgUt8E8eWqz4F8S6PKbJg7V6fKoEA6o3wroavFxVIaAcvwxZe25PyscXck/exec" style="display:none;"></div>
+
+  <div class="header">
+    <div class="top-bar">
+      <span class="sync-status sync-online" id="syncStatus">🟢 Online</span>
+      <button class="btn-refresh" onclick="cargarDatosDesdeSheets()">🔄 Sincronizar</button>
+      <button class="btn-toggle-avance" onclick="toggleAvanceAuditores()">📈 Avance Detallado</button>
+      <button class="btn-view-report" onclick="toggleReporteMensual()">📊 Reporte Mensual</button>
+      <button class="admin-btn" id="adminBtn" onclick="toggleAdmin()">🔒 Modo Admin</button>
+    </div>
+    <h1>REPORTE DE AUDITORÍA - ONLINE</h1>
+    <div class="admin-indicator" id="adminIndicator">⚠️ Modo edición activado - Puedes editar y eliminar registros</div>
+  </div>
+
+  <div class="form-card">
+    <div class="section-title" id="formTitle">Agregar registro</div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Auditor</label>
+        <select id="f-auditor">
+         <option value="BETSABET">BETSABET</option>
+          <option value="CECILIA">CECILIA</option>
+          <option value="HERNAN">HERNAN</option>
+          <option value="MARIA TERESA">MARIA TERESA</option>
+          <option value="MERY">MERY</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Cantidad FUAs entregadas</label>
+        <input type="number" id="f-fuas-e" min="1" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Fecha de entrega</label>
+        <input type="date" id="f-fecha-e">
+      </div>
+      <div class="field">
+        <label>Cantidad FUAs auditadas</label>
+        <input type="number" id="f-fuas-a" min="1" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Fecha devolución auditadas</label>
+        <input type="date" id="f-fecha-d">
+      </div>
+      <div class="field">
+        <label>Categoría</label>
+       <select id="f-categoria">
+          <option value="consulta externa">Consulta externa</option>
+          <option value="Emergencia">Emergencia</option>
+          <option value="Hospitalizacion">Hospitalización</option>
+          <option value="Apoyo al diagnostico">Apoyo al diagnóstico</option>
+          <option value="NEO">NEO</option>
+          <option value="Oxigeno">Oxígeno</option>
+          <option value="otros cod prestacionales">Otros cód. prestacionales</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-add" id="btnAdd" onclick="agregarRegistro()">+ Agregar datos</button>
+      <button class="btn-update" id="btnUpdate" onclick="actualizarRegistro()">✏️ Actualizar registro</button>
+      <button class="btn-cancel" id="btnCancel" onclick="cancelarEdicion()">✕ Cancelar</button>
+      <button class="btn-export-csv" onclick="exportarCSV()">⬇ Exportar CSV</button>
+      <button class="btn-export-pdf" onclick="window.print()">🖨 Imprimir / PDF</button>
+      <span class="success-msg" id="ok-msg">✓ Operación exitosa</span>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="m-label">Total registros</div><div class="m-val" id="m-total">0</div></div>
+    <div class="metric"><div class="m-label">FUAs entregadas</div><div class="m-val" id="m-fuas-e">0</div></div>
+    <div class="metric"><div class="m-label">FUAs auditadas</div><div class="m-val" id="m-fuas-a">0</div></div>
+    <div class="metric"><div class="m-label">Auditores activos</div><div class="m-val" id="m-audit">0</div></div>
+  </div>
+
+  <div class="resumen-general-container">
+    <div class="resumen-card">
+      <h3>📊 Resumen General por Auditor</h3>
+      <table class="resumen-table">
+        <thead>
+          <tr><th>Auditor</th><th class="num">Entregadas</th><th class="num">Auditadas</th><th class="num">%</th></tr>
+        </thead>
+        <tbody id="resumen-auditor-body"><tr><td colspan="4" class="empty">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+    <div class="resumen-card">
+      <h3>📅 Resumen General por Mes</h3>
+      <table class="resumen-table">
+        <thead>
+          <tr><th>Mes</th><th class="num">Entregadas</th><th class="num">Auditadas</th><th class="num">%</th></tr>
+        </thead>
+        <tbody id="resumen-mes-body"><tr><td colspan="4" class="empty">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="avance-auditores" id="avanceAuditores">
+    <h3>📈 AVANCE DETALLADO POR AUDITOR</h3>
+    <div class="avance-grid" id="avanceGrid"><div class="empty">Cargando...</div></div>
+  </div>
+
+  <div class="reporte-mensual-card" id="reporteMensualCard">
+    <h3>📊 REPORTE MENSUAL DETALLADO</h3>
+    <div class="year-selector">
+      <label>Año:</label>
+      <select id="yearSelector" onchange="renderReporteMensual()"></select>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="reporte-mensual-table">
+        <thead id="reporteMensualHead"></thead>
+        <tbody id="reporteMensualBody"><tr><td colspan="26" class="empty">Selecciona un año</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <select id="flt-auditor" onchange="renderTabla()"><option value="">Todos los auditores</option></select>
+    <select id="flt-cat" onchange="renderTabla()">
+      <option value="">Todas las categorías</option>
+      <option>Hospitalizacion</option><option>consulta externa</option><option>Emergencia</option><option>Apoyo al diagnostico</option>
+    </select>
+    <input type="text" id="flt-buscar" placeholder="Buscar..." oninput="renderTabla()" style="min-width:160px;">
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Auditor</th><th>FUAs ent.</th><th>Fecha ent.</th><th>FUAs aud.</th><th>Fecha dev.</th><th>Categoría</th><th>Acciones</th></tr>
+      </thead>
+      <tbody id="tabla-body"><tr><td colspan="7" class="empty">Cargando datos...</td></tr></tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>🔐 Acceso de Administrador</h3>
+    <p>Ingresa la contraseña para activar el modo edición.</p>
+    <input type="password" id="modalPassword" placeholder="Contraseña" onkeypress="if(event.key==='Enter')verificarPassword()">
+    <div class="modal-error" id="modalError">❌ Contraseña incorrecta</div>
+    <div class="modal-buttons">
+      <button class="modal-btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="modal-btn-primary" onclick="verificarPassword()">Acceder</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ CONFIGURACIÓN ============
+const ADMIN_PASSWORD = 'admin2026';
+const API_URL = document.getElementById('apiConfig').dataset.api;
+
+const BADGE = {
+  'Hospitalizacion': 'badge-hosp', 'consulta externa': 'badge-cons',
+  'Emergencia': 'badge-emer', 'Apoyo al diagnostico': 'badge-diag',
+  'NEO': 'badge-neo', 'Oxigeno': 'badge-oxi', 'otros cod prestacionales': 'badge-otros'
+};
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+let esAdmin = false;
+let editandoIdx = null;
+let datos = [];
+
+// ============ FUNCIONES DE GOOGLE SHEETS ============
+async function cargarDatosDesdeSheets() {
+  updateSyncStatus('syncing', '🟡 Sincronizando...');
+  try {
+    const response = await fetch(API_URL);
+    const data = await response.json();
+    datos = data.map(d => ({
+      id: d.id,
+      auditor: d.auditor,
+      fuasE: parseInt(d.fuasE),
+      fechaE: d.fechaE,
+      fuasA: parseInt(d.fuasA),
+      fechaD: d.fechaD,
+      cat: d.cat
+    }));
+    updateSyncStatus('online', '🟢 Online');
+    renderTodo();
+  } catch (error) {
+    console.error('Error al cargar datos:', error);
+    updateSyncStatus('offline', '🔴 Sin conexión');
+    // Cargar de localStorage como respaldo
+    const backup = localStorage.getItem('datosAuditoriaBackup');
+    if (backup) {
+      datos = JSON.parse(backup);
+      renderTodo();
+    }
+  }
+}
+
+async function enviarASheets(action, registro) {
+  updateSyncStatus('syncing', '🟡 Guardando...');
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action, ...registro })
+    });
+    await response.json();
+    updateSyncStatus('online', '🟢 Online');
+    // Guardar backup local
+    localStorage.setItem('datosAuditoriaBackup', JSON.stringify(datos));
+    return true;
+  } catch (error) {
+    console.error('Error al enviar:', error);
+    updateSyncStatus('offline', '🔴 Error al guardar');
+    return false;
+  }
+}
+
+function updateSyncStatus(status, text) {
+  const el = document.getElementById('syncStatus');
+  el.textContent = text;
+  el.className = 'sync-status';
+  if (status === 'online') el.classList.add('sync-online');
+  else if (status === 'offline') el.classList.add('sync-offline');
+  else if (status === 'syncing') el.classList.add('sync-syncing');
+}
+
+// ============ FUNCIONES DE LA APLICACIÓN ============
+function toggleAvanceAuditores() {
+  document.getElementById('avanceAuditores').classList.toggle('show');
+  if (document.getElementById('avanceAuditores').classList.contains('show')) {
+    renderAvanceAuditores();
+  }
+}
+
+function toggleReporteMensual() {
+  const card = document.getElementById('reporteMensualCard');
+  card.classList.toggle('show');
+  if (card.classList.contains('show')) {
+    actualizarSelectorAnios();
+    renderReporteMensual();
+  }
+}
+
+function toggleAdmin() {
+  if (esAdmin) { desactivarAdmin(); }
+  else { document.getElementById('modalOverlay').classList.add('show'); }
+}
+
+function verificarPassword() {
+  if (document.getElementById('modalPassword').value === ADMIN_PASSWORD) {
+    activarAdmin();
+    document.getElementById('modalOverlay').classList.remove('show');
+  } else {
+    document.getElementById('modalError').style.display = 'block';
+  }
+}
+
+function cerrarModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+
+function activarAdmin() {
+  esAdmin = true;
+  document.getElementById('adminBtn').textContent = '🔓 Salir Admin';
+  document.getElementById('adminBtn').classList.add('active');
+  document.getElementById('adminIndicator').classList.add('show');
+  renderTabla();
+}
+
+function desactivarAdmin() {
+  esAdmin = false;
+  cancelarEdicion();
+  document.getElementById('adminBtn').textContent = '🔒 Modo Admin';
+  document.getElementById('adminBtn').classList.remove('active');
+  document.getElementById('adminIndicator').classList.remove('show');
+  renderTabla();
+}
+
+function editarRegistro(idx) {
+  if (!esAdmin) return;
+  editandoIdx = idx;
+  const d = datos[idx];
+  document.getElementById('f-auditor').value = d.auditor;
+  document.getElementById('f-fuas-e').value = d.fuasE;
+  document.getElementById('f-fuas-a').value = d.fuasA;
+  document.getElementById('f-categoria').value = d.cat;
+  const fe = d.fechaE.split('/');
+  document.getElementById('f-fecha-e').value = `${fe[2]}-${fe[1]}-${fe[0]}`;
+  const fd = d.fechaD.split('/');
+  document.getElementById('f-fecha-d').value = `${fd[2]}-${fd[1]}-${fd[0]}`;
+  document.getElementById('formTitle').textContent = '✏️ Editando registro';
+  document.getElementById('btnAdd').style.display = 'none';
+  document.getElementById('btnUpdate').style.display = 'inline-block';
+  document.getElementById('btnCancel').style.display = 'inline-block';
+  renderTabla();
+}
+
+async function actualizarRegistro() {
+  if (editandoIdx === null) return;
+  const registro = {
+    id: datos[editandoIdx].id,
+    auditor: document.getElementById('f-auditor').value,
+    fuasE: parseInt(document.getElementById('f-fuas-e').value),
+    fechaE: fmtDate(document.getElementById('f-fecha-e').value),
+    fuasA: parseInt(document.getElementById('f-fuas-a').value),
+    fechaD: fmtDate(document.getElementById('f-fecha-d').value),
+    cat: document.getElementById('f-categoria').value
+  };
+  await enviarASheets('update', registro);
+  cancelarEdicion();
+  await cargarDatosDesdeSheets();
+  showOk('✓ Registro actualizado');
+}
+
+function cancelarEdicion() {
+  editandoIdx = null;
+  ['f-auditor','f-fuas-e','f-fecha-e','f-fuas-a','f-fecha-d','f-categoria'].forEach(id => {
+    const el = document.getElementById(id);
+    el.tagName === 'SELECT' ? (el.selectedIndex = 0) : (el.value = '');
+  });
+  document.getElementById('formTitle').textContent = 'Agregar registro';
+  document.getElementById('btnAdd').style.display = 'inline-block';
+  document.getElementById('btnUpdate').style.display = 'none';
+  document.getElementById('btnCancel').style.display = 'none';
+  renderTabla();
+}
+
+async function agregarRegistro() {
+  if (editandoIdx !== null) return;
+  const registro = {
+    auditor: document.getElementById('f-auditor').value,
+    fuasE: parseInt(document.getElementById('f-fuas-e').value),
+    fechaE: fmtDate(document.getElementById('f-fecha-e').value),
+    fuasA: parseInt(document.getElementById('f-fuas-a').value),
+    fechaD: fmtDate(document.getElementById('f-fecha-d').value),
+    cat: document.getElementById('f-categoria').value
+  };
+  if (!registro.auditor || !registro.fuasE || !registro.fechaE || !registro.fuasA || !registro.fechaD || !registro.cat) {
+    alert('Completa todos los campos.'); return;
+  }
+  await enviarASheets('add', registro);
+  ['f-auditor','f-fuas-e','f-fecha-e','f-fuas-a','f-fecha-d','f-categoria'].forEach(id => {
+    const el = document.getElementById(id);
+    el.tagName === 'SELECT' ? (el.selectedIndex = 0) : (el.value = '');
+  });
+  await cargarDatosDesdeSheets();
+  showOk('✓ Registro guardado');
+}
+
+async function eliminar(idx) {
+  if (!esAdmin) return;
+  if (confirm('¿Eliminar este registro?')) {
+    await enviarASheets('delete', { id: datos[idx].id });
+    await cargarDatosDesdeSheets();
+  }
+}
+
+function showOk(msg) {
+  const ok = document.getElementById('ok-msg');
+  ok.textContent = msg;
+  ok.style.display = 'inline-block';
+  setTimeout(() => { ok.style.display = 'none'; }, 2500);
+}
+
+function fmtDate(val) {
+  if (!val) return '';
+  const [y,m,d] = val.split('-');
+  return d+'/'+m+'/'+y;
+}
+
+// ============ RENDERIZADO ============
+function renderResumenGeneral() {
+  const resumenAud = {};
+  const resumenMes = {};
+  datos.forEach(d => {
+    if (!resumenAud[d.auditor]) resumenAud[d.auditor] = { e: 0, a: 0 };
+    resumenAud[d.auditor].e += d.fuasE;
+    resumenAud[d.auditor].a += d.fuasA;
+    
+    const p = d.fechaE.split('/');
+    if (p.length === 3) {
+      const clave = `${MESES[parseInt(p[1])-1]} ${p[2]}`;
+      const orden = `${p[2]}-${p[1]}`;
+      if (!resumenMes[clave]) resumenMes[clave] = { e: 0, a: 0, orden };
+      resumenMes[clave].e += d.fuasE;
+      resumenMes[clave].a += d.fuasA;
+    }
+  });
+  
+  // Auditor
+  const auds = Object.keys(resumenAud).sort();
+  let htmlA = '', te = 0, ta = 0;
+  auds.forEach(a => {
+    const r = resumenAud[a];
+    const pct = r.e > 0 ? ((r.a/r.e)*100).toFixed(1) : 0;
+    const color = pct >= 90 ? '#27ae60' : pct >= 70 ? '#f39c12' : '#e74c3c';
+    te += r.e; ta += r.a;
+    htmlA += `<tr><td><strong>${a}</strong></td><td class="num">${r.e.toLocaleString()}</td><td class="num">${r.a.toLocaleString()}</td><td class="num"><span style="color:${color};font-weight:600;">${pct}%</span></td></tr>`;
+  });
+  const pctT = te > 0 ? ((ta/te)*100).toFixed(1) : 0;
+  htmlA += `<tr class="total-row"><td><strong>TOTAL</strong></td><td class="num">${te.toLocaleString()}</td><td class="num">${ta.toLocaleString()}</td><td class="num">${pctT}%</td></tr>`;
+  document.getElementById('resumen-auditor-body').innerHTML = htmlA || '<tr><td colspan="4" class="empty">Sin datos</td></tr>';
+  
+  // Mes
+  const meses = Object.keys(resumenMes).sort((a,b) => resumenMes[a].orden.localeCompare(resumenMes[b].orden));
+  let htmlM = '', tme = 0, tma = 0;
+  meses.forEach(m => {
+    const r = resumenMes[m];
+    const pct = r.e > 0 ? ((r.a/r.e)*100).toFixed(1) : 0;
+    const color = pct >= 90 ? '#27ae60' : pct >= 70 ? '#f39c12' : '#e74c3c';
+    tme += r.e; tma += r.a;
+    htmlM += `<tr><td><strong>${m}</strong></td><td class="num">${r.e.toLocaleString()}</td><td class="num">${r.a.toLocaleString()}</td><td class="num"><span style="color:${color};font-weight:600;">${pct}%</span></td></tr>`;
+  });
+  const pctTM = tme > 0 ? ((tma/tme)*100).toFixed(1) : 0;
+  htmlM += `<tr class="total-row"><td><strong>TOTAL</strong></td><td class="num">${tme.toLocaleString()}</td><td class="num">${tma.toLocaleString()}</td><td class="num">${pctTM}%</td></tr>`;
+  document.getElementById('resumen-mes-body').innerHTML = htmlM || '<tr><td colspan="4" class="empty">Sin datos</td></tr>';
+}
+
+function renderAvanceAuditores() {
+  const resumen = {};
+  datos.forEach(d => {
+    if (!resumen[d.auditor]) resumen[d.auditor] = { e: 0, a: 0, cats: {} };
+    resumen[d.auditor].e += d.fuasE;
+    resumen[d.auditor].a += d.fuasA;
+    resumen[d.auditor].cats[d.cat] = (resumen[d.auditor].cats[d.cat] || 0) + 1;
+  });
+  const auds = Object.keys(resumen).sort();
+  const maxE = Math.max(...auds.map(a => resumen[a].e), 1);
+  
+  document.getElementById('avanceGrid').innerHTML = auds.map(a => {
+    const r = resumen[a];
+    const pct = r.e > 0 ? parseFloat(((r.a/r.e)*100).toFixed(1)) : 0;
+    let clase = pct >= 90 ? 'alto' : pct >= 70 ? 'medio' : 'bajo';
+    return `
+      <div class="avance-card">
+        <div class="avance-header">
+          <span class="avance-nombre">👤 ${a}</span>
+          <span class="avance-porcentaje ${clase}">${pct}%</span>
+        </div>
+        <div class="avance-numeros">
+          <span class="entregadas">📥 ${r.e.toLocaleString()}</span>
+          <span class="auditadas">📤 ${r.a.toLocaleString()}</span>
+        </div>
+        <div class="barra-progreso"><div class="relleno ${clase}" style="width:${(r.e/maxE)*100}%"></div></div>
+        <div class="avance-detalle">
+          ${r.e - r.a > 0 ? `⚠️ Pendiente: ${(r.e-r.a).toLocaleString()}` : '✅ Al día'} | 📂 ${Object.keys(r.cats).length}/7
+        </div>
+      </div>`;
+  }).join('') || '<div class="empty">Sin datos</div>';
+}
+
+function actualizarSelectorAnios() {
+  const anios = new Set();
+  datos.forEach(d => { const p = d.fechaE.split('/'); if(p.length===3) anios.add(p[2]); });
+  const sel = document.getElementById('yearSelector');
+  sel.innerHTML = [...anios].sort((a,b)=>b-a).map(a => `<option>${a}</option>`).join('') || '<option>2026</option>';
+}
+
+function renderReporteMensual() {
+  const anio = document.getElementById('yearSelector').value;
+  const reporte = {};
+  datos.forEach(d => {
+    const p = d.fechaE.split('/');
+    if(p.length===3 && p[2]===anio) {
+      const mes = parseInt(p[1])-1;
+      if(!reporte[d.auditor]) reporte[d.auditor] = Array(12).fill(null).map(()=>({e:0,a:0}));
+      reporte[d.auditor][mes].e += d.fuasE;
+      reporte[d.auditor][mes].a += d.fuasA;
+    }
+  });
+  const auds = Object.keys(reporte).sort();
+  
+  document.getElementById('reporteMensualHead').innerHTML = 
+    '<tr><th>Auditor</th>'+MESES.map(m=>`<th colspan="2">${m.substring(0,3)}</th>`).join('')+'<th colspan="2">TOTAL</th></tr>'+
+    '<tr><th></th>'+MESES.map(()=>'<th>E</th><th>A</th>').join('')+'<th>E</th><th>A</th></tr>';
+  
+  let html = '';
+  auds.forEach(a => {
+    html += `<tr><td><strong>${a}</strong></td>`;
+    let te=0, ta=0;
+    for(let m=0;m<12;m++) {
+      const d = reporte[a][m];
+      te+=d.e; ta+=d.a;
+      const pct = d.e>0?(d.a/d.e)*100:0;
+      const cls = pct>=90?'celda-alta':pct>=70?'celda-media':(d.e>0||d.a>0)?'celda-baja':'';
+      html += `<td class="num ${cls}">${d.e||'-'}</td><td class="num ${cls}">${d.a||'-'}</td>`;
+    }
+    const pctT = te>0?((ta/te)*100).toFixed(1):0;
+    html += `<td class="num" style="font-weight:700;">${te.toLocaleString()}</td><td class="num" style="font-weight:700;">${ta.toLocaleString()} (${pctT}%)</td></tr>`;
+  });
+  document.getElementById('reporteMensualBody').innerHTML = html || `<tr><td colspan="26" class="empty">Sin datos para ${anio}</td></tr>`;
+}
+
+function renderTabla() {
+  const fa = document.getElementById('flt-auditor').value;
+  const fc = document.getElementById('flt-cat').value;
+  const fb = document.getElementById('flt-buscar').value.toLowerCase();
+  const fil = datos.filter(d => (!fa||d.auditor===fa) && (!fc||d.cat===fc) && (!fb||d.auditor.toLowerCase().includes(fb)||d.cat.toLowerCase().includes(fb)));
+  
+  document.getElementById('tabla-body').innerHTML = fil.length === 0 ? 
+    '<tr><td colspan="7" class="empty">Sin resultados</td></tr>' :
+    fil.map((d,i) => {
+      const origIdx = datos.indexOf(d);
+      return `<tr class="${editandoIdx===origIdx?'editing':''}">
+        <td>${d.auditor}</td><td class="num">${d.fuasE}</td><td>${d.fechaE}</td>
+        <td class="num">${d.fuasA}</td><td>${d.fechaD}</td>
+        <td><span class="badge ${BADGE[d.cat]||''}">${d.cat}</span></td>
+        <td>${esAdmin ? `<button class="btn-edit show" onclick="editarRegistro(${origIdx})">✏️</button><button class="btn-del" onclick="eliminar(${origIdx})">✕</button>` : ''}</td>
+      </tr>`;
+    }).join('');
+  
+  document.getElementById('m-total').textContent = datos.length;
+  document.getElementById('m-fuas-e').textContent = datos.reduce((s,d)=>s+d.fuasE,0).toLocaleString();
+  document.getElementById('m-fuas-a').textContent = datos.reduce((s,d)=>s+d.fuasA,0).toLocaleString();
+  document.getElementById('m-audit').textContent = new Set(datos.map(d=>d.auditor)).size;
+  
+  // Actualizar filtro
+  const sel = document.getElementById('flt-auditor');
+  const auds = [...new Set(datos.map(d=>d.auditor))].sort();
+  sel.innerHTML = '<option value="">Todos</option>'+auds.map(a=>`<option>${a}</option>`).join('');
+}
+
+function renderTodo() {
+  renderTabla();
+  renderResumenGeneral();
+  if(document.getElementById('avanceAuditores').classList.contains('show')) renderAvanceAuditores();
+  if(document.getElementById('reporteMensualCard').classList.contains('show')) { actualizarSelectorAnios(); renderReporteMensual(); }
+}
+
+function exportarCSV() {
+  const csv = [['Auditor','FUAs Entregadas','Fecha Entrega','FUAs Auditadas','Fecha Devolución','Categoría'].join(',')]
+    .concat(datos.map(d => `"${d.auditor}","${d.fuasE}","${d.fechaE}","${d.fuasA}","${d.fechaD}","${d.cat}"`)).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'reporte_auditoria.csv';
+  a.click();
+}
+
+// Iniciar
+cargarDatosDesdeSheets();
+</script>
+</body>
+</html>
