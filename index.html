@@ -185,19 +185,45 @@
   .modal-btn-secondary:hover { background: #ccc; }
   .modal-error { color: #e74c3c; font-size: 12px; margin-bottom: 1rem; display: none; }
 
+  /* Reporte diario */
+  .reporte-diario-card { background:#fff; border-radius:10px; border:1px solid #ddd; padding:1.5rem; margin-bottom:1.5rem; overflow-x:auto; display:none; }
+  .reporte-diario-card.show { display:block; }
+  .reporte-diario-card h3 { font-size:16px; font-weight:700; color:#185FA5; margin-bottom:1rem; text-transform:uppercase; text-align:center; }
+  .diario-filters { display:flex; align-items:center; gap:10px; margin-bottom:1rem; flex-wrap:wrap; }
+  .diario-filters label { font-size:13px; font-weight:600; color:#555; }
+  .diario-filters select { padding:6px 12px; border-radius:6px; border:1px solid #bbb; font-size:13px; background:#fff; }
+  .btn-diario { padding:8px 18px; background:#e67e22; color:#fff; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; }
+  .btn-diario:hover { background:#d35400; }
+  .btn-csv-diario { padding:6px 14px; background:#27ae60; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; }
+  .btn-csv-diario:hover { background:#1e8449; }
+  .btn-pdf-diario { padding:6px 14px; background:#c0392b; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; }
+  .btn-pdf-diario:hover { background:#96281b; }
+  /* Reporte mensual con categorías */
+  .reporte-mensual-table .cat-row td { background:#f8fafc; font-style:italic; color:#555; font-size:11px; }
+  .reporte-mensual-table .subtotal-row td { background:#e8f0f7; font-weight:700; color:#185FA5; }
+  .reporte-mensual-table .grand-total-row td { background:#185FA5; color:#fff; font-weight:700; }
+  .btn-csv-mensual { padding:6px 14px; background:#27ae60; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; }
+  .btn-csv-mensual:hover { background:#1e8449; }
+  .btn-pdf-mensual { padding:6px 14px; background:#c0392b; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; }
+  .btn-pdf-mensual:hover { background:#96281b; }
+
   @media (max-width: 768px) {
     .resumen-general-container { grid-template-columns: 1fr; }
     .top-bar { flex-direction: column; align-items: flex-end; }
   }
 
   @media print {
-    .btn-row, .filter-row, .btn-del, .btn-edit, .form-card, .admin-btn, 
+    .btn-row, .filter-row, .btn-del, .btn-edit, .form-card, .admin-btn,
     .admin-indicator, .modal-overlay, .top-bar, .btn-view-report, .btn-toggle-avance,
-    .btn-refresh, .sync-status { display: none !important; }
+    .btn-refresh, .sync-status, .diario-filters, .report-filters,
+    .btn-csv-diario, .btn-pdf-diario, .btn-csv-mensual, .btn-pdf-mensual,
+    .btn-clear-filters, .btn-diario { display: none !important; }
     body { background: #fff; }
     .app { padding: 0; }
     .avance-auditores { display: block !important; }
     .reporte-mensual-card { display: block !important; }
+    .reporte-diario-card { display: block !important; }
+    #printFilterInfo { display: block !important; }
   }
 </style>
 </head>
@@ -211,8 +237,9 @@
     <div class="top-bar">
       <span class="sync-status sync-online" id="syncStatus">🟢 Online</span>
       <button class="btn-refresh" onclick="cargarDatosDesdeSheets()">🔄 Sincronizar</button>
-      <button class="btn-toggle-avance" onclick="toggleAvanceAuditores()">📈 Avance Detallado</button>
-      <button class="btn-view-report" onclick="toggleReporteMensual()">📊 Reporte Mensual</button>
+      <button class="btn-toggle-avance" onclick="toggleAvanceAuditores()">&#128200; Avance Detallado</button>
+      <button class="btn-diario" onclick="toggleReporteDiario()">&#128197; Reporte Diario</button>
+      <button class="btn-view-report" onclick="toggleReporteMensual()">&#128202; Reporte Mensual</button>
       <button class="admin-btn" id="adminBtn" onclick="toggleAdmin()">🔒 Modo Admin</button>
     </div>
     <h1>REPORTE DE AUDITORÍA - ONLINE</h1>
@@ -304,6 +331,34 @@
     <div class="avance-grid" id="avanceGrid"><div class="empty">Cargando...</div></div>
   </div>
 
+  <!-- REPORTE DIARIO -->
+  <div class="reporte-diario-card" id="reporteDiarioCard">
+    <h3>&#128197; REPORTE POR D&#205;AS DEL MES</h3>
+    <div class="diario-filters">
+      <label>Mes:</label>
+      <select id="diarioMes" onchange="renderReporteDiario()">
+        <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+        <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+        <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+        <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+      </select>
+      <label>A&#241;o:</label>
+      <select id="diarioAnio" onchange="renderReporteDiario()"></select>
+      <label>Auditora:</label>
+      <select id="diarioAuditora" onchange="renderReporteDiario()">
+        <option value="">Todas</option>
+      </select>
+      <button class="btn-csv-diario" onclick="exportarCSVdiario()">&#8659; CSV Diario</button>
+      <button class="btn-pdf-diario" onclick="imprimirDiario()">&#128424; PDF Diario</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="reporte-mensual-table">
+        <thead id="reporteDiarioHead"></thead>
+        <tbody id="reporteDiarioBody"><tr><td colspan="6" class="empty">Selecciona mes y a&#241;o</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="reporte-mensual-card" id="reporteMensualCard">
     <h3>&#128202; REPORTE MENSUAL DETALLADO</h3>
 
@@ -333,7 +388,9 @@
         <option value="">Todas</option>
       </select>
 
-      <button class="btn-clear-filters" onclick="limpiarFiltrosReporte()">&#10005; Limpiar filtros</button>
+      <button class="btn-csv-mensual" onclick="exportarCSVmensual()">&#8659; CSV Mensual</button>
+      <button class="btn-pdf-mensual" onclick="window.print()">&#128424; PDF</button>
+      <button class="btn-clear-filters" onclick="limpiarFiltrosReporte()">&#10005; Limpiar</button>
     </div>
 
     <div id="printFilterInfo"></div>
@@ -681,8 +738,6 @@ function actualizarSelectorAnios() {
   datos.forEach(d => { const p = d.fechaE.split('/'); if(p.length===3) anios.add(p[2]); });
   const sel = document.getElementById('yearSelector');
   sel.innerHTML = [...anios].sort((a,b)=>b-a).map(a => `<option>${a}</option>`).join('') || '<option>2026</option>';
-
-  // Poblar selector de auditoras para el reporte
   const auds = [...new Set(datos.map(d => d.auditor))].sort();
   const selAud = document.getElementById('auditoraSelectorReporte');
   const currentVal = selAud ? selAud.value : '';
@@ -699,57 +754,250 @@ function renderReporteMensual() {
   const anio = document.getElementById('yearSelector').value;
   const mesFiltro = document.getElementById('mesSelector').value;
   const auditoraFiltro = document.getElementById('auditoraSelectorReporte').value;
-
   const mesFiltroNum = mesFiltro !== '' ? parseInt(mesFiltro) : null;
 
+  // reporte[auditor][cat][mes] = {e,a}
   const reporte = {};
+  const todasCats = new Set();
   datos.forEach(d => {
     const p = d.fechaE.split('/');
-    if(p.length===3 && p[2]===anio) {
-      const mes = parseInt(p[1])-1;
-      // Filtrar por auditora si está seleccionada
-      if(auditoraFiltro && d.auditor !== auditoraFiltro) return;
-      // Filtrar por mes si está seleccionado
-      if(mesFiltroNum !== null && mes !== mesFiltroNum) return;
-      if(!reporte[d.auditor]) reporte[d.auditor] = Array(12).fill(null).map(()=>({e:0,a:0}));
-      reporte[d.auditor][mes].e += d.fuasE;
-      reporte[d.auditor][mes].a += d.fuasA;
-    }
+    if(p.length!==3 || p[2]!==anio) return;
+    const mes = parseInt(p[1])-1;
+    if(auditoraFiltro && d.auditor !== auditoraFiltro) return;
+    if(mesFiltroNum !== null && mes !== mesFiltroNum) return;
+    if(!reporte[d.auditor]) reporte[d.auditor] = {};
+    if(!reporte[d.auditor][d.cat]) reporte[d.auditor][d.cat] = Array(12).fill(null).map(()=>({e:0,a:0}));
+    reporte[d.auditor][d.cat][mes].e += d.fuasE;
+    reporte[d.auditor][d.cat][mes].a += d.fuasA;
+    todasCats.add(d.cat);
   });
+
   const auds = Object.keys(reporte).sort();
-
-  // Determinar qué meses mostrar
-  const mesesMostrar = mesFiltroNum !== null ? [mesFiltroNum] : [...Array(12).keys()];
-
-  // Calcular colspan total para mensajes vacios
-  const colspanTotal = 2 + mesesMostrar.length * 2 + 2;
+  const mesesM = mesFiltroNum !== null ? [mesFiltroNum] : [...Array(12).keys()];
+  const colspan = 3 + mesesM.length * 2 + 2;
 
   document.getElementById('reporteMensualHead').innerHTML =
-    '<tr><th>Auditor</th>' + mesesMostrar.map(mi => `<th colspan="2">${MESES[mi].substring(0,3)}</th>`).join('') + '<th colspan="2">TOTAL</th></tr>' +
-    '<tr><th></th>' + mesesMostrar.map(() => '<th>E</th><th>A</th>').join('') + '<th>E</th><th>A</th></tr>';
+    '<tr><th>Auditor</th><th>Categoría</th>' + mesesM.map(mi => `<th colspan="2">${MESES[mi].substring(0,3)}</th>`).join('') + '<th colspan="2">TOTAL</th></tr>' +
+    '<tr><th></th><th></th>' + mesesM.map(() => '<th>E</th><th>A</th>').join('') + '<th>E</th><th>A</th></tr>';
 
   let html = '';
-  auds.forEach(a => {
-    html += `<tr><td><strong>${a}</strong></td>`;
-    let te=0, ta=0;
-    mesesMostrar.forEach(m => {
-      const d = reporte[a][m];
-      te+=d.e; ta+=d.a;
+  // Grand totals
+  const grandTotal = Array(12).fill(null).map(()=>({e:0,a:0}));
+
+  auds.forEach(aud => {
+    const cats = Object.keys(reporte[aud]).sort();
+    const subtotal = Array(12).fill(null).map(()=>({e:0,a:0}));
+
+    cats.forEach((cat, ci) => {
+      const catData = reporte[aud][cat];
+      let te=0, ta=0;
+      html += `<tr class="cat-row">`;
+      if(ci===0) html += `<td rowspan="${cats.length + 1}" style="font-weight:700;vertical-align:top;padding-top:10px;">${aud}</td>`;
+      html += `<td style="text-align:left;padding-left:8px;">${cat}</td>`;
+      mesesM.forEach(m => {
+        const d = catData[m] || {e:0,a:0};
+        te+=d.e; ta+=d.a;
+        subtotal[m].e+=d.e; subtotal[m].a+=d.a;
+        grandTotal[m].e+=d.e; grandTotal[m].a+=d.a;
+        const pct = d.e>0?(d.a/d.e)*100:0;
+        const cls = pct>=90?'celda-alta':pct>=70?'celda-media':(d.e>0||d.a>0)?'celda-baja':'';
+        html += `<td class="num ${cls}">${d.e||'-'}</td><td class="num ${cls}">${d.a||'-'}</td>`;
+      });
+      const pctT = te>0?((ta/te)*100).toFixed(1):0;
+      html += `<td class="num">${te.toLocaleString()}</td><td class="num">${ta.toLocaleString()} (${pctT}%)</td></tr>`;
+    });
+
+    // Subtotal row for this auditor
+    let ste=0, sta=0;
+    html += `<tr class="subtotal-row"><td colspan="1" style="text-align:left;">SUBTOTAL ${aud}</td>`;
+    mesesM.forEach(m => {
+      const d = subtotal[m];
+      ste+=d.e; sta+=d.a;
       const pct = d.e>0?(d.a/d.e)*100:0;
       const cls = pct>=90?'celda-alta':pct>=70?'celda-media':(d.e>0||d.a>0)?'celda-baja':'';
       html += `<td class="num ${cls}">${d.e||'-'}</td><td class="num ${cls}">${d.a||'-'}</td>`;
     });
-    const pctT = te>0?((ta/te)*100).toFixed(1):0;
-    html += `<td class="num" style="font-weight:700;">${te.toLocaleString()}</td><td class="num" style="font-weight:700;">${ta.toLocaleString()} (${pctT}%)</td></tr>`;
+    const spctT = ste>0?((sta/ste)*100).toFixed(1):0;
+    html += `<td class="num">${ste.toLocaleString()}</td><td class="num">${sta.toLocaleString()} (${spctT}%)</td></tr>`;
   });
-  document.getElementById('reporteMensualBody').innerHTML = html || `<tr><td colspan="${colspanTotal}" class="empty">Sin datos para ${anio}${auditoraFiltro?' - '+auditoraFiltro:''}${mesFiltroNum!==null?' - '+MESES[mesFiltroNum]:''}</td></tr>`;
 
-  // Actualizar info de impresion
+  // Grand total row
+  if(auds.length > 0) {
+    let gte=0, gta=0;
+    html += `<tr class="grand-total-row"><td colspan="2">TOTAL GENERAL ${anio}</td>`;
+    mesesM.forEach(m => {
+      const d = grandTotal[m];
+      gte+=d.e; gta+=d.a;
+      html += `<td class="num">${d.e||'-'}</td><td class="num">${d.a||'-'}</td>`;
+    });
+    const gpct = gte>0?((gta/gte)*100).toFixed(1):0;
+    html += `<td class="num">${gte.toLocaleString()}</td><td class="num">${gta.toLocaleString()} (${gpct}%)</td></tr>`;
+  }
+
+  document.getElementById('reporteMensualBody').innerHTML = html || `<tr><td colspan="${colspan}" class="empty">Sin datos para ${anio}${auditoraFiltro?' - '+auditoraFiltro:''}${mesFiltroNum!==null?' - '+MESES[mesFiltroNum]:''}</td></tr>`;
+
   const parts = [];
   if(anio) parts.push('Año: ' + anio);
   if(mesFiltroNum !== null) parts.push('Mes: ' + MESES[mesFiltroNum]);
   if(auditoraFiltro) parts.push('Auditora: ' + auditoraFiltro);
   document.getElementById('printFilterInfo').textContent = parts.length ? 'Filtros aplicados: ' + parts.join(' | ') : '';
+}
+
+function exportarCSVmensual() {
+  const anio = document.getElementById('yearSelector').value;
+  const mesFiltro = document.getElementById('mesSelector').value;
+  const auditoraFiltro = document.getElementById('auditoraSelectorReporte').value;
+  const mesFiltroNum = mesFiltro !== '' ? parseInt(mesFiltro) : null;
+  const mesesM = mesFiltroNum !== null ? [mesFiltroNum] : [...Array(12).keys()];
+
+  const reporte = {};
+  datos.forEach(d => {
+    const p = d.fechaE.split('/');
+    if(p.length!==3 || p[2]!==anio) return;
+    const mes = parseInt(p[1])-1;
+    if(auditoraFiltro && d.auditor !== auditoraFiltro) return;
+    if(mesFiltroNum !== null && mes !== mesFiltroNum) return;
+    if(!reporte[d.auditor]) reporte[d.auditor] = {};
+    if(!reporte[d.auditor][d.cat]) reporte[d.auditor][d.cat] = Array(12).fill(null).map(()=>({e:0,a:0}));
+    reporte[d.auditor][d.cat][mes].e += d.fuasE;
+    reporte[d.auditor][d.cat][mes].a += d.fuasA;
+  });
+
+  const header = ['Auditor','Categoria'].concat(mesesM.flatMap(mi=>[MESES[mi]+' E',MESES[mi]+' A'])).concat(['Total E','Total A','%']);
+  const rows = [header.map(h=>`"${h}"`).join(',')];
+
+  Object.keys(reporte).sort().forEach(aud => {
+    let ste=0, sta=0;
+    Object.keys(reporte[aud]).sort().forEach(cat => {
+      let te=0, ta=0;
+      const cols = [`"${aud}"`,`"${cat}"`];
+      mesesM.forEach(m => { const d=reporte[aud][cat][m]||{e:0,a:0}; te+=d.e; ta+=d.a; cols.push(d.e||0,d.a||0); });
+      cols.push(te,ta, te>0?((ta/te)*100).toFixed(1)+'%':'0%');
+      rows.push(cols.join(','));
+      ste+=te; sta+=ta;
+    });
+    rows.push([`"SUBTOTAL ${aud}"`,'"--"',...mesesM.flatMap(m=>{const sub=Object.values(reporte[aud]).reduce((acc,cd)=>{const d=cd[m]||{e:0,a:0};acc.e+=d.e;acc.a+=d.a;return acc;},{e:0,a:0}); return [sub.e,sub.a];}),ste,sta,ste>0?((sta/ste)*100).toFixed(1)+'%':'0%'].join(','));
+  });
+
+  const csv = rows.join('
+');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `reporte_mensual${mesFiltroNum!==null?'_'+MESES[mesFiltroNum]:''}${auditoraFiltro?'_'+auditoraFiltro:''}_${anio}.csv`;
+  a.click();
+}
+
+// ============ REPORTE DIARIO ============
+function toggleReporteDiario() {
+  const card = document.getElementById('reporteDiarioCard');
+  card.classList.toggle('show');
+  if(card.classList.contains('show')) {
+    const now = new Date();
+    document.getElementById('diarioMes').value = now.getMonth();
+    actualizarSelectorAniosDiario();
+    actualizarSelectorAuditorasDiario();
+    renderReporteDiario();
+    card.scrollIntoView({behavior:'smooth'});
+  }
+}
+
+function actualizarSelectorAniosDiario() {
+  const anios = new Set();
+  datos.forEach(d => { const p = d.fechaE.split('/'); if(p.length===3) anios.add(p[2]); });
+  const sel = document.getElementById('diarioAnio');
+  const actual = new Date().getFullYear().toString();
+  sel.innerHTML = [...anios].sort((a,b)=>b-a).map(a=>`<option${a===actual?' selected':''}>${a}</option>`).join('') || `<option>${actual}</option>`;
+}
+
+function actualizarSelectorAuditorasDiario() {
+  const auds = [...new Set(datos.map(d=>d.auditor))].sort();
+  const sel = document.getElementById('diarioAuditora');
+  const cv = sel.value;
+  sel.innerHTML = '<option value="">Todas</option>' + auds.map(a=>`<option value="${a}"${a===cv?' selected':''}>${a}</option>`).join('');
+}
+
+function renderReporteDiario() {
+  const mes = parseInt(document.getElementById('diarioMes').value);
+  const anio = document.getElementById('diarioAnio').value;
+  const auditora = document.getElementById('diarioAuditora').value;
+  const diasEnMes = new Date(parseInt(anio), mes+1, 0).getDate();
+
+  const reporte = {};
+  datos.forEach(d => {
+    if(auditora && d.auditor !== auditora) return;
+    const p = d.fechaE.split('/');
+    if(p.length===3 && parseInt(p[1])-1===mes && p[2]===anio) {
+      const dia = parseInt(p[0]);
+      if(!reporte[dia]) reporte[dia] = {e:0, a:0, registros:[]};
+      reporte[dia].e += d.fuasE;
+      reporte[dia].a += d.fuasA;
+      reporte[dia].registros.push(d);
+    }
+  });
+
+  document.getElementById('reporteDiarioHead').innerHTML =
+    '<tr><th>D&#237;a</th><th>Entregadas</th><th>Auditadas</th><th>Pendientes</th><th>%</th><th>Registros</th></tr>';
+
+  let te=0, ta=0, totalReg=0, html='';
+  for(let dia=1; dia<=diasEnMes; dia++) {
+    const r = reporte[dia] || {e:0,a:0,registros:[]};
+    te+=r.e; ta+=r.a; totalReg+=r.registros.length;
+    if(r.e===0 && r.a===0) continue;
+    const pct = r.e>0?((r.a/r.e)*100).toFixed(1):'-';
+    const pend = r.e-r.a;
+    const color = r.e>0?(parseFloat(pct)>=90?'#27ae60':parseFloat(pct)>=70?'#f39c12':'#e74c3c'):'#888';
+    html += `<tr>
+      <td><strong>${dia} ${MESES[mes].substring(0,3)}</strong></td>
+      <td class="num">${r.e.toLocaleString()}</td>
+      <td class="num">${r.a.toLocaleString()}</td>
+      <td class="num" style="color:${pend>0?'#e74c3c':'#27ae60'}">${pend>0?pend.toLocaleString():'0'}</td>
+      <td class="num"><span style="color:${color};font-weight:600;">${pct}${pct!=='-'?'%':''}</span></td>
+      <td class="num">${r.registros.length}</td>
+    </tr>`;
+  }
+  const pctTotal = te>0?((ta/te)*100).toFixed(1):0;
+  html += `<tr class="grand-total-row">
+    <td><strong>TOTAL ${MESES[mes].toUpperCase()} ${anio}${auditora?' - '+auditora:''}</strong></td>
+    <td class="num">${te.toLocaleString()}</td><td class="num">${ta.toLocaleString()}</td>
+    <td class="num">${(te-ta).toLocaleString()}</td>
+    <td class="num">${pctTotal}%</td><td class="num">${totalReg}</td>
+  </tr>`;
+
+  document.getElementById('reporteDiarioBody').innerHTML = html || `<tr><td colspan="6" class="empty">Sin datos para ${MESES[mes]} ${anio}${auditora?' - '+auditora:''}</td></tr>`;
+}
+
+function exportarCSVdiario() {
+  const mes = parseInt(document.getElementById('diarioMes').value);
+  const anio = document.getElementById('diarioAnio').value;
+  const auditora = document.getElementById('diarioAuditora').value;
+  const diasEnMes = new Date(parseInt(anio), mes+1, 0).getDate();
+  const filas = [['Dia','Entregadas','Auditadas','Pendientes','%','Registros']];
+  for(let dia=1; dia<=diasEnMes; dia++) {
+    let e=0,a=0,reg=0;
+    datos.forEach(d => {
+      if(auditora && d.auditor!==auditora) return;
+      const p = d.fechaE.split('/');
+      if(p.length===3 && parseInt(p[0])===dia && parseInt(p[1])-1===mes && p[2]===anio) { e+=d.fuasE; a+=d.fuasA; reg++; }
+    });
+    if(e>0||a>0) filas.push([`${dia} ${MESES[mes]}`,e,a,e-a,e>0?((a/e)*100).toFixed(1):0,reg]);
+  }
+  const csv = filas.map(r=>r.map(v=>`"${v}"`).join(',')).join('
+');
+  const blob = new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+  const lnk = document.createElement('a');
+  lnk.href = URL.createObjectURL(blob);
+  lnk.download = `reporte_diario_${MESES[mes]}${auditora?'_'+auditora:''}_${anio}.csv`;
+  lnk.click();
+}
+
+function imprimirDiario() {
+  const mes = parseInt(document.getElementById('diarioMes').value);
+  const anio = document.getElementById('diarioAnio').value;
+  const auditora = document.getElementById('diarioAuditora').value;
+  // Temporarily show only diario card for print
+  document.querySelectorAll('.reporte-mensual-card, .avance-auditores').forEach(el=>el.classList.remove('show'));
+  window.print();
 }
 
 function renderTabla() {
@@ -786,6 +1034,7 @@ function renderTodo() {
   renderResumenGeneral();
   if(document.getElementById('avanceAuditores').classList.contains('show')) renderAvanceAuditores();
   if(document.getElementById('reporteMensualCard').classList.contains('show')) { actualizarSelectorAnios(); renderReporteMensual(); }
+  if(document.getElementById('reporteDiarioCard') && document.getElementById('reporteDiarioCard').classList.contains('show')) { actualizarSelectorAniosDiario(); actualizarSelectorAuditorasDiario(); renderReporteDiario(); }
 }
 
 function exportarCSV() {
