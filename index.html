@@ -4,15 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reporte de Auditoría - Online</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; background: #f4f6f8; color: #1a1a1a; }
   .app { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
-  .header { text-align: center; padding: 1.25rem; background: #fff; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 1.5rem; position: relative; }
+  .header { text-align: center; padding: 1.25rem; background: #fff; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 1.5rem; }
   .header h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.08em; color: #1a1a1a; }
   .top-bar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 0.5rem; flex-wrap: wrap; }
   .sync-status { font-size: 11px; padding: 4px 10px; border-radius: 99px; font-weight: 600; }
-  .sync-online { background: #dcfce7; color: #14532d; }
+  .sync-online  { background: #dcfce7; color: #14532d; }
   .sync-offline { background: #fee2e2; color: #7f1d1d; }
   .sync-syncing { background: #fef3c7; color: #78350f; }
   .admin-btn { padding: 6px 15px; background: #6c5ce7; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
@@ -28,31 +31,29 @@
   .field input, .field select { font-size: 14px; padding: 7px 10px; border-radius: 6px; border: 1px solid #bbb; background: #fff; color: #1a1a1a; width: 100%; }
   .field input:focus, .field select:focus { outline: none; border-color: #185FA5; box-shadow: 0 0 0 2px #185FA522; }
   .btn-row { display: flex; align-items: center; gap: 12px; margin-top: 1rem; flex-wrap: wrap; }
-  .btn-add { padding: 8px 22px; background: #185FA5; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-add    { padding: 8px 22px; background: #185FA5; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
   .btn-add:hover { background: #0C447C; }
-  .btn-export-pdf { padding: 8px 18px; background: #c0392b; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
-  .btn-export-csv { padding: 8px 18px; background: #27ae60; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
   .btn-update { padding: 8px 22px; background: #6c5ce7; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; display: none; }
   .btn-cancel { padding: 8px 18px; background: #95a5a6; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; display: none; }
-  .btn-view-report { padding: 8px 18px; background: #8e44ad; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-view-report   { padding: 8px 18px; background: #8e44ad; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .btn-toggle-avance { padding: 8px 18px; background: #2980b9; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .btn-refresh { padding: 8px 18px; background: #16a085; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .btn-grafico { padding: 8px 18px; background: #e67e22; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .btn-grafico:hover { background: #d35400; }
-  .btn-diario { padding: 8px 18px; background: #2ecc71; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-diario  { padding: 8px 18px; background: #2ecc71; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .btn-diario:hover { background: #27ae60; }
   .success-msg { font-size: 12px; color: #27ae60; background: #eafaf1; padding: 4px 10px; border-radius: 6px; display: none; }
   .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
   .metric { background: #fff; border-radius: 8px; padding: 0.85rem 1rem; border: 1px solid #ddd; }
-  .metric .m-label { font-size: 11px; color: #888; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-  .metric .m-val { font-size: 24px; font-weight: 700; color: #185FA5; }
+  .metric .m-label { font-size: 11px; color: #888; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; }
+  .metric .m-val   { font-size: 24px; font-weight: 700; color: #185FA5; }
   .resumen-general-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
   .resumen-card { background: #fff; border-radius: 10px; border: 1px solid #ddd; padding: 1rem; overflow-x: auto; }
-  .resumen-card h3 { font-size: 14px; font-weight: 700; color: #185FA5; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .resumen-card h3 { font-size: 14px; font-weight: 700; color: #185FA5; margin-bottom: 0.75rem; text-transform: uppercase; }
   .resumen-table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .resumen-table th { background: #e8f0f7; color: #444; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 8px; text-align: left; border-bottom: 1px solid #d0d7de; }
   .resumen-table td { padding: 6px 8px; border-bottom: 1px solid #eee; }
-  .resumen-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .resumen-table .num { text-align: right; }
   .resumen-table .total-row { font-weight: 700; background: #f8fafc; }
   .avance-auditores { background: #fff; border-radius: 10px; border: 1px solid #ddd; padding: 1.25rem; margin-bottom: 1.5rem; display: none; }
   .avance-auditores.show { display: block; }
@@ -61,31 +62,58 @@
   .avance-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
   .avance-nombre { font-weight: 700; font-size: 15px; }
   .avance-porcentaje { font-weight: 700; font-size: 18px; }
-  .avance-porcentaje.alto { color: #27ae60; }
+  .avance-porcentaje.alto  { color: #27ae60; }
   .avance-porcentaje.medio { color: #f39c12; }
-  .avance-porcentaje.bajo { color: #e74c3c; }
+  .avance-porcentaje.bajo  { color: #e74c3c; }
   .avance-numeros { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 12px; color: #666; }
   .barra-progreso { width: 100%; height: 10px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
   .barra-progreso .relleno { height: 100%; border-radius: 99px; }
-  .barra-progreso .relleno.alto { background: #27ae60; }
+  .barra-progreso .relleno.alto  { background: #27ae60; }
   .barra-progreso .relleno.medio { background: #f39c12; }
-  .barra-progreso .relleno.bajo { background: #e74c3c; }
+  .barra-progreso .relleno.bajo  { background: #e74c3c; }
   .avance-detalle { margin-top: 0.5rem; font-size: 11px; color: #888; text-align: right; }
-  .reporte-mensual-card { background: #fff; border-radius: 10px; border: 1px solid #ddd; padding: 1.5rem; margin-bottom: 1.5rem; overflow-x: auto; display: none; }
-  .reporte-mensual-card.show { display: block; }
-  .reporte-mensual-card h3 { font-size: 16px; font-weight: 700; color: #185FA5; margin-bottom: 1rem; text-align: center; }
-  .reporte-diario-card { background: #fff; border-radius: 10px; border: 1px solid #ddd; padding: 1.5rem; margin-bottom: 1.5rem; overflow-x: auto; display: none; }
-  .reporte-diario-card.show { display: block; }
-  .reporte-diario-card h3 { font-size: 16px; font-weight: 700; color: #185FA5; margin-bottom: 1rem; text-align: center; }
+
+  /* ===== TARJETAS DE REPORTE ===== */
+  .reporte-diario-card, .reporte-mensual-card {
+    background: #fff; border-radius: 10px; border: 1px solid #ddd;
+    padding: 1.5rem; margin-bottom: 1.5rem; display: none;
+  }
+  .reporte-diario-card.show, .reporte-mensual-card.show { display: block; }
+
+  /* ===== ENCABEZADO DE REPORTE ===== */
+  .reporte-titulo-bloque { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; }
+  .reporte-titulo-bloque h3 { font-size: 16px; font-weight: 700; color: #185FA5; }
+
+  /* ===== CONTROLES / FILTROS ===== */
+  .reporte-controles {
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
+    background: #f8fafc; border-radius: 8px; padding: 12px 14px;
+    border: 1px solid #e2e8f0; margin-bottom: 1rem;
+  }
+  .ctrl-group { display: flex; flex-direction: column; gap: 4px; }
+  .ctrl-group label { font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+  .ctrl-group select { font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid #bbb; background: #fff; min-width: 140px; }
+  .ctrl-sep { flex: 1; }
+
+  /* ===== BOTONES EXPORTAR ===== */
+  .export-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn-exp { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .btn-exp:hover { opacity: .85; }
+  .btn-exp-excel { background: #1d6f42; color: #fff; }
+  .btn-exp-pdf   { background: #c0392b; color: #fff; }
+  .btn-exp-print { background: #444;    color: #fff; }
+
+  /* ===== TABLA DE REPORTE ===== */
   .reporte-mensual-table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .reporte-mensual-table th { background: #185FA5; color: white; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 10px 8px; text-align: center; border: 1px solid #0C447C; white-space: nowrap; }
   .reporte-mensual-table td { padding: 8px; border: 1px solid #d0d7de; text-align: center; }
-  .reporte-mensual-table .num { font-variant-numeric: tabular-nums; }
   .reporte-mensual-table .total-row { font-weight: 700; background: #f8fafc; }
-  .celda-alta { color: #27ae60; font-weight: 600; }
+  .celda-alta  { color: #27ae60; font-weight: 600; }
   .celda-media { color: #f39c12; font-weight: 600; }
-  .celda-baja { color: #e74c3c; font-weight: 600; }
+  .celda-baja  { color: #e74c3c; font-weight: 600; }
   .codigo-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; background: #e8f0f7; color: #185FA5; }
+
+  /* ===== TABLA PRINCIPAL ===== */
   .filter-row { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
   .filter-row input, .filter-row select { font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid #bbb; background: #fff; color: #1a1a1a; }
   .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #ddd; background: #fff; margin-bottom: 1.5rem; }
@@ -94,25 +122,28 @@
   tbody tr { border-bottom: 1px solid #eee; }
   tbody tr:hover { background: #f0f4f8; }
   td { padding: 9px 8px; }
-  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.num { text-align: right; }
   .badge { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 11px; font-weight: 600; }
-  .badge-hosp { background: #dbeafe; color: #1e3a8a; }
-  .badge-cons { background: #dcfce7; color: #14532d; }
-  .badge-emer { background: #fee2e2; color: #7f1d1d; }
-  .badge-diag { background: #fef3c7; color: #78350f; }
-  .badge-neo { background: #f3e8ff; color: #581c87; }
-  .badge-oxi { background: #e0f2fe; color: #075985; }
+  .badge-hosp  { background: #dbeafe; color: #1e3a8a; }
+  .badge-cons  { background: #dcfce7; color: #14532d; }
+  .badge-emer  { background: #fee2e2; color: #7f1d1d; }
+  .badge-diag  { background: #fef3c7; color: #78350f; }
+  .badge-neo   { background: #f3e8ff; color: #581c87; }
+  .badge-oxi   { background: #e0f2fe; color: #075985; }
   .badge-otros { background: #f5f5f4; color: #44403c; }
-  .btn-del { background: none; border: none; color: #aaa; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
+  .btn-del  { background: none; border: none; color: #aaa; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
   .btn-del:hover { background: #fee2e2; color: #c0392b; }
   .btn-edit { background: none; border: none; color: #aaa; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; margin-right: 4px; display: none; }
   .btn-edit:hover { background: #e8f0f7; color: #185FA5; }
   .btn-edit.show { display: inline-block; }
   tr.editing { background: #fff9c4 !important; }
   .empty { text-align: center; padding: 2rem; color: #aaa; font-size: 13px; }
-  .year-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
-  .year-selector label { font-size: 13px; font-weight: 600; color: #555; }
-  .year-selector select { padding: 6px 12px; border-radius: 6px; border: 1px solid #bbb; font-size: 14px; font-weight: 600; }
+  .grafico-container { margin-top: 1.5rem; background: #f8fafc; border-radius: 10px; padding: 1rem; border: 1px solid #e2e8f0; }
+  .grafico-leyenda { display: flex; gap: 20px; justify-content: center; margin-top: 10px; font-size: 12px; }
+  .leyenda-item { display: flex; align-items: center; gap: 6px; }
+  .leyenda-color { width: 14px; height: 14px; border-radius: 3px; }
+
+  /* ===== MODAL ===== */
   .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
   .modal-overlay.show { display: flex; }
   .modal { background: white; border-radius: 12px; padding: 2rem; width: 90%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
@@ -120,27 +151,29 @@
   .modal input { width: 100%; padding: 10px; border: 1px solid #bbb; border-radius: 6px; font-size: 14px; margin-bottom: 1rem; }
   .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
   .modal-buttons button { padding: 8px 20px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
-  .modal-btn-primary { background: #6c5ce7; color: white; }
+  .modal-btn-primary   { background: #6c5ce7; color: white; }
   .modal-btn-secondary { background: #ddd; color: #333; }
   .modal-error { color: #e74c3c; font-size: 12px; margin-bottom: 1rem; display: none; }
-  .grafico-container { margin-top: 1.5rem; background: #f8fafc; border-radius: 10px; padding: 1rem; border: 1px solid #e2e8f0; }
-  .grafico-leyenda { display: flex; gap: 20px; justify-content: center; margin-top: 10px; font-size: 12px; }
-  .leyenda-item { display: flex; align-items: center; gap: 6px; }
-  .leyenda-color { width: 14px; height: 14px; border-radius: 3px; }
-  .export-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
-  @media (max-width: 768px) { .resumen-general-container { grid-template-columns: 1fr; } }
-  @media print { 
-    .btn-row, .filter-row, .btn-del, .btn-edit, .form-card, .admin-btn, .admin-indicator, .modal-overlay, .top-bar, .btn-view-report, .btn-toggle-avance, .btn-refresh, .btn-grafico, .btn-diario, .sync-status, .export-btns { display: none !important; } 
-    body { background: #fff; } .app { padding: 0; } 
-    .avance-auditores, .reporte-mensual-card, .reporte-diario-card { display: block !important; } 
+
+  /* ===== PRINT ===== */
+  .print-only { display: none; }
+  @media print {
+    .top-bar, .form-card, .admin-btn, .admin-indicator,
+    .modal-overlay, .filter-row, .btn-del, .btn-edit,
+    .export-group, .reporte-controles, .no-print { display: none !important; }
+    .print-only { display: block !important; }
+    body { background: #fff; }
+    .app { padding: 0; }
+    .avance-auditores, .reporte-mensual-card, .reporte-diario-card { display: block !important; }
   }
+  @media (max-width: 768px) { .resumen-general-container { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <div class="app">
-
   <div id="apiConfig" data-api="https://script.google.com/macros/s/AKfycbxeUpnuk-ihTyqtWRLmgYD3qc76vLb_UBBUxWyoc4UxjgxQndsUXHOmDV7yvIzYIz1G/exec" style="display:none;"></div>
 
+  <!-- HEADER -->
   <div class="header">
     <div class="top-bar">
       <span class="sync-status sync-online" id="syncStatus">🟢 Online</span>
@@ -154,10 +187,11 @@
     <div class="admin-indicator" id="adminIndicator">⚠️ Modo edición activado</div>
   </div>
 
+  <!-- FORMULARIO -->
   <div class="form-card">
     <div class="section-title" id="formTitle">Agregar registro</div>
     <div class="form-grid">
-      <div class="field"><label>Auditor</label><select id="f-auditor"><option value="">Seleccionar</option><option>BETZABET SALCEDO</option><option>MARIA TERESA JO NOREÑA</option><option>ENRIQUE PILARES</option></select></div>
+      <div class="field"><label>Auditor</label><select id="f-auditor"><option value="">Seleccionar</option><option>BETZABET SALCEDO</option><option>MARIA TERESA JO NOREÑA</option></select></div>
       <div class="field"><label>FUAs entregadas</label><input type="number" id="f-fuas-e" min="1" placeholder="0"></div>
       <div class="field"><label>Fecha entrega</label><input type="date" id="f-fecha-e"></div>
       <div class="field"><label>FUAs auditadas</label><input type="number" id="f-fuas-a" min="1" placeholder="0"></div>
@@ -168,12 +202,11 @@
       <button class="btn-add" id="btnAdd" onclick="agregarRegistro()">+ Agregar</button>
       <button class="btn-update" id="btnUpdate" onclick="actualizarRegistro()">✏️ Actualizar</button>
       <button class="btn-cancel" id="btnCancel" onclick="cancelarEdicion()">✕ Cancelar</button>
-      <button class="btn-export-csv" onclick="exportarCSV()">⬇ CSV</button>
-      <button class="btn-export-pdf" onclick="window.print()">🖨 PDF</button>
       <span class="success-msg" id="ok-msg">✓ Listo</span>
     </div>
   </div>
 
+  <!-- MÉTRICAS -->
   <div class="metrics">
     <div class="metric"><div class="m-label">Registros</div><div class="m-val" id="m-total">0</div></div>
     <div class="metric"><div class="m-label">FUAs Entregadas</div><div class="m-val" id="m-fuas-e">0</div></div>
@@ -181,30 +214,48 @@
     <div class="metric"><div class="m-label">Auditores</div><div class="m-val" id="m-audit">0</div></div>
   </div>
 
+  <!-- RESUMEN -->
   <div class="resumen-general-container">
     <div class="resumen-card"><h3>📊 Por Auditor</h3><table class="resumen-table"><thead><tr><th>Auditor</th><th class="num">Entr.</th><th class="num">Aud.</th><th class="num">%</th></tr></thead><tbody id="resumen-auditor-body"></tbody></table></div>
     <div class="resumen-card"><h3>📅 Por Mes</h3><table class="resumen-table"><thead><tr><th>Mes</th><th class="num">Entr.</th><th class="num">Aud.</th><th class="num">%</th></tr></thead><tbody id="resumen-mes-body"></tbody></table></div>
   </div>
 
-  <div class="avance-auditores" id="avanceAuditores"><h3>📈 AVANCE DETALLADO</h3><div class="avance-grid" id="avanceGrid"></div></div>
+  <!-- AVANCE -->
+  <div class="avance-auditores" id="avanceAuditores">
+    <h3>📈 AVANCE DETALLADO</h3>
+    <div class="avance-grid" id="avanceGrid"></div>
+  </div>
 
-  <!-- REPORTE DIARIO -->
+  <!-- ============ REPORTE DIARIO ============ -->
   <div class="reporte-diario-card" id="reporteDiarioCard">
-    <h3>📅 REPORTE POR DÍAS DEL MES</h3>
-    <div class="year-selector">
-      <label>Mes:</label>
-      <select id="diarioMes" onchange="renderReporteDiario()">
-        <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
-        <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
-        <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
-        <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
-      </select>
-      <label>Año:</label>
-      <select id="diarioAnio" onchange="renderReporteDiario()"></select>
-      <div class="export-btns">
-        <button class="btn-export-csv" onclick="exportarCSVdiario()" style="font-size:12px;padding:6px 12px;">⬇ CSV Diario</button>
+    <div class="reporte-titulo-bloque">
+      <h3>📅 REPORTE DIARIO</h3>
+      <div class="export-group no-print">
+        <button class="btn-exp btn-exp-excel" onclick="exportarExcelDiario()">📥 Excel</button>
+        <button class="btn-exp btn-exp-pdf"   onclick="exportarPDFDiario()">📄 PDF</button>
+        <button class="btn-exp btn-exp-print"  onclick="imprimirSeccion('reporteDiarioCard','diarioPrintInfo')">🖨 Imprimir</button>
       </div>
     </div>
+    <div class="reporte-controles no-print">
+      <div class="ctrl-group">
+        <label>Auditor</label>
+        <select id="diarioAuditor" onchange="renderReporteDiario()"><option value="">Todos los auditores</option></select>
+      </div>
+      <div class="ctrl-group">
+        <label>Mes</label>
+        <select id="diarioMes" onchange="renderReporteDiario()">
+          <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+          <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+          <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+          <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label>Año</label>
+        <select id="diarioAnio" onchange="renderReporteDiario()"></select>
+      </div>
+    </div>
+    <div class="print-only" id="diarioPrintInfo" style="font-size:12px;color:#555;margin-bottom:10px;"></div>
     <div style="overflow-x:auto;">
       <table class="reporte-mensual-table">
         <thead id="reporteDiarioHead"></thead>
@@ -213,40 +264,81 @@
     </div>
   </div>
 
-  <!-- REPORTE MENSUAL -->
+  <!-- ============ REPORTE MENSUAL ============ -->
   <div class="reporte-mensual-card" id="reporteMensualCard">
-    <h3>📊 REPORTE MENSUAL DETALLADO</h3>
-    <div class="year-selector">
-      <label>Año:</label><select id="yearSelector" onchange="renderReporteMensual()"></select>
-      <button class="btn-grafico" onclick="toggleGrafico()">📊 Ver Gráfico</button>
+    <div class="reporte-titulo-bloque">
+      <h3>📊 REPORTE MENSUAL</h3>
+      <div class="export-group no-print">
+        <button class="btn-exp btn-exp-excel" onclick="exportarExcelMensual()">📥 Excel</button>
+        <button class="btn-exp btn-exp-pdf"   onclick="exportarPDFMensual()">📄 PDF</button>
+        <button class="btn-exp btn-exp-print"  onclick="imprimirSeccion('reporteMensualCard','mensualPrintInfo')">🖨 Imprimir</button>
+      </div>
     </div>
-    <div style="overflow-x:auto;"><table class="reporte-mensual-table"><thead id="reporteMensualHead"></thead><tbody id="reporteMensualBody"></tbody></table></div>
+    <div class="reporte-controles no-print">
+      <div class="ctrl-group">
+        <label>Auditor</label>
+        <select id="mensualAuditor" onchange="renderReporteMensual()"><option value="">Todos los auditores</option></select>
+      </div>
+      <div class="ctrl-group">
+        <label>Año</label>
+        <select id="yearSelector" onchange="renderReporteMensual()"></select>
+      </div>
+      <div class="ctrl-group">
+        <label>Mes</label>
+        <select id="mensualMes" onchange="renderReporteMensual()">
+          <option value="">Todos los meses</option>
+          <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+          <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+          <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+          <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+        </select>
+      </div>
+      <div class="ctrl-sep"></div>
+      <div class="ctrl-group" style="justify-content:flex-end;">
+        <label>&nbsp;</label>
+        <button class="btn-grafico" onclick="toggleGrafico()">📊 Ver Gráfico</button>
+      </div>
+    </div>
+    <div class="print-only" id="mensualPrintInfo" style="font-size:12px;color:#555;margin-bottom:10px;"></div>
+    <div style="overflow-x:auto;">
+      <table class="reporte-mensual-table">
+        <thead id="reporteMensualHead"></thead>
+        <tbody id="reporteMensualBody"></tbody>
+      </table>
+    </div>
     <div id="graficoContainer"></div>
   </div>
 
+  <!-- TABLA PRINCIPAL -->
   <div class="filter-row">
     <select id="flt-auditor" onchange="renderTabla()"><option value="">Todos</option></select>
-    <select id="flt-cat" onchange="renderTabla()"><option value="">Categorías</option><option>consulta externa 056</option><option>Emergencia 062-063</option><option>Hospitalizacion 064-065-067-068</option><option>Apoyo al diagnostico 071</option><option>NEO 050-051-052</option><option>Oxigeno 908</option><option>otros cod prestacionales 007-02-029-058-059-911-OTROS</option></select>
+    <select id="flt-cat" onchange="renderTabla()">
+      <option value="">Categorías</option>
+      <option>consulta externa 056</option><option>Emergencia 062-063</option>
+      <option>Hospitalizacion 064-065-067-068</option><option>Apoyo al diagnostico 071</option>
+      <option>NEO 050-051-052</option><option>Oxigeno 908</option>
+      <option>otros cod prestacionales 007-02-029-058-059-911-OTROS</option>
+    </select>
     <input type="text" id="flt-buscar" placeholder="Buscar..." oninput="renderTabla()" style="min-width:160px;">
   </div>
-
   <div class="table-wrap">
     <table>
-      <thead>
-        <tr><th>Auditor</th><th>Entr.</th><th>F. Entrega</th><th>Aud.</th><th>F. Devol.</th><th>ID Servicio</th><th>Categoría</th><th>Acciones</th></tr>
-      </thead>
+      <thead><tr><th>Auditor</th><th>Entr.</th><th>F. Entrega</th><th>Aud.</th><th>F. Devol.</th><th>ID Servicio</th><th>Categoría</th><th>Acciones</th></tr></thead>
       <tbody id="tabla-body"></tbody>
     </table>
   </div>
-
 </div>
 
+<!-- MODAL -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <h3>🔐 Administrador</h3><p>Contraseña:</p>
     <input type="password" id="modalPassword" placeholder="Contraseña" onkeypress="if(event.key==='Enter')verificarPassword()">
     <div class="modal-error" id="modalError">❌ Incorrecta</div>
-    <div class="modal-buttons"><button class="modal-btn-secondary" onclick="cerrarModal()">Cancelar</button><button class="modal-btn-primary" onclick="verificarPassword()">Acceder</button></div>
+    <div class="modal-buttons">
+      <button class="modal-btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="modal-btn-primary" onclick="verificarPassword()">Acceder</button>
+    </div>
   </div>
 </div>
 
@@ -254,119 +346,93 @@
 const ADMIN_PASSWORD = 'admin2026';
 const API_URL = document.getElementById('apiConfig').dataset.api;
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
 let esAdmin = false, editandoIdx = null, datos = [];
 
+/* ── UTILS ── */
 function getBadge(cat) {
   const c = cat.toLowerCase();
   if (c.includes('hospitalizacion')) return 'badge-hosp';
   if (c.includes('consulta externa')) return 'badge-cons';
-  if (c.includes('emergencia')) return 'badge-emer';
+  if (c.includes('emergencia'))       return 'badge-emer';
   if (c.includes('apoyo al diagnostico')) return 'badge-diag';
-  if (c.includes('neo')) return 'badge-neo';
+  if (c.includes('neo'))    return 'badge-neo';
   if (c.includes('oxigeno')) return 'badge-oxi';
-  if (c.includes('otros')) return 'badge-otros';
+  if (c.includes('otros'))  return 'badge-otros';
   return '';
 }
-
 function extraerCodigo(cat) {
   if (!cat) return '-';
-  const match = cat.match(/\d{2,3}(-\d{2,3})*(-\d{2,3})*/);
-  if (match) return match[0];
-  const partes = cat.split(' ');
-  const ultimo = partes[partes.length - 1];
-  if (/^\d/.test(ultimo)) return ultimo;
+  const m = cat.match(/\d{2,3}(-\d{2,3})*/);
+  if (m) return m[0];
+  const p = cat.split(' '), u = p[p.length-1];
+  if (/^\d/.test(u)) return u;
   return '-';
 }
-
 function extraerNombreCat(cat) {
   if (!cat) return '';
-  return cat.replace(/\s*\d{2,3}(-\d{2,3})*(-\d{2,3})*\s*$/, '').trim().replace(/\s*OTROS\s*$/i, '').trim();
+  return cat.replace(/\s*\d{2,3}(-\d{2,3})*\s*$/, '').trim().replace(/\s*OTROS\s*$/i,'').trim();
 }
-
-function parseFecha(fechaStr) {
-  if (!fechaStr) return null;
-  let partes = [];
-  if (fechaStr.includes('/')) {
-    partes = fechaStr.split('/');
-  } else if (fechaStr.includes('-')) {
-    partes = fechaStr.split('-');
-    if (partes.length === 3 && partes[0].length === 4) {
-      partes = [partes[2], partes[1], partes[0]];
-    }
+function parseFecha(s) {
+  if (!s) return null;
+  let p = [];
+  if (s.includes('/')) { p = s.split('/'); }
+  else if (s.includes('-')) {
+    p = s.split('-');
+    if (p.length===3 && p[0].length===4) p = [p[2],p[1],p[0]];
   }
-  if (partes.length === 3) {
-    return { dia: parseInt(partes[0]), mes: parseInt(partes[1]) - 1, anio: partes[2] };
-  }
+  if (p.length===3) return { dia:parseInt(p[0]), mes:parseInt(p[1])-1, anio:p[2] };
   return null;
 }
 
-// ============ API ============
+/* ── API ── */
 async function cargarDatos() {
   updateStatus('syncing','🟡 Cargando...');
   try {
     const r = await fetch(API_URL);
     const d = await r.json();
     if (d.error) throw new Error(d.error);
-    datos = d.map(x => ({
-      id: x.id, auditor: x.auditor,
-      fuasE: parseInt(x.fuasE) || 0, fechaE: x.fechaE || '',
-      fuasA: parseInt(x.fuasA) || 0, fechaD: x.fechaD || '',
-      cat: x.cat || ''
-    }));
+    datos = d.map(x=>({id:x.id,auditor:x.auditor,fuasE:parseInt(x.fuasE)||0,fechaE:x.fechaE||'',fuasA:parseInt(x.fuasA)||0,fechaD:x.fechaD||'',cat:x.cat||''}));
     updateStatus('online','🟢 Online');
     renderTodo();
   } catch(e) {
     updateStatus('offline','🔴 Sin conexión');
     const b = localStorage.getItem('backupAuditoria');
-    if(b) { datos = JSON.parse(b); renderTodo(); }
+    if (b) { datos = JSON.parse(b); renderTodo(); }
   }
 }
-
-async function enviarAPI(accion, datos) {
+async function enviarAPI(accion, payload) {
   updateStatus('syncing','🟡 Guardando...');
   try {
-    const r = await fetch(API_URL, {method:'POST',body:JSON.stringify({action:accion,...datos})});
+    const r = await fetch(API_URL,{method:'POST',body:JSON.stringify({action:accion,...payload})});
     const j = await r.json();
     if (j.error) throw new Error(j.error);
-    updateStatus('online','🟢 Online');
-    return true;
+    updateStatus('online','🟢 Online'); return true;
   } catch(e) { updateStatus('offline','🔴 Error'); return false; }
 }
-
 function updateStatus(s,t) {
-  const el = document.getElementById('syncStatus');
-  el.textContent = t; el.className = 'sync-status';
+  const el=document.getElementById('syncStatus');
+  el.textContent=t; el.className='sync-status';
   if(s==='online') el.classList.add('sync-online');
   else if(s==='offline') el.classList.add('sync-offline');
   else el.classList.add('sync-syncing');
 }
 
-// ============ ADMIN ============
-function toggleAdmin() { esAdmin ? desactivarAdmin() : (document.getElementById('modalOverlay').classList.add('show'),document.getElementById('modalPassword').value='',document.getElementById('modalError').style.display='none',setTimeout(()=>document.getElementById('modalPassword').focus(),100)); }
-function verificarPassword() { document.getElementById('modalPassword').value===ADMIN_PASSWORD ? (activarAdmin(),document.getElementById('modalOverlay').classList.remove('show')) : (document.getElementById('modalError').style.display='block'); }
+/* ── ADMIN ── */
+function toggleAdmin() { esAdmin?desactivarAdmin():(document.getElementById('modalOverlay').classList.add('show'),document.getElementById('modalPassword').value='',document.getElementById('modalError').style.display='none',setTimeout(()=>document.getElementById('modalPassword').focus(),100)); }
+function verificarPassword() { document.getElementById('modalPassword').value===ADMIN_PASSWORD?(activarAdmin(),document.getElementById('modalOverlay').classList.remove('show')):(document.getElementById('modalError').style.display='block'); }
 function cerrarModal() { document.getElementById('modalOverlay').classList.remove('show'); }
-function activarAdmin() { esAdmin=true; document.getElementById('adminBtn').textContent='🔓 Salir'; document.getElementById('adminBtn').classList.add('active'); document.getElementById('adminIndicator').classList.add('show'); renderTabla(); }
+function activarAdmin()    { esAdmin=true;  document.getElementById('adminBtn').textContent='🔓 Salir'; document.getElementById('adminBtn').classList.add('active'); document.getElementById('adminIndicator').classList.add('show'); renderTabla(); }
 function desactivarAdmin() { esAdmin=false; cancelarEdicion(); document.getElementById('adminBtn').textContent='🔒 Admin'; document.getElementById('adminBtn').classList.remove('active'); document.getElementById('adminIndicator').classList.remove('show'); renderTabla(); }
 
-// ============ CRUD ============
+/* ── CRUD ── */
 async function agregarRegistro() {
-  if(editandoIdx!==null) return;
-  const r = {
-    auditor: document.getElementById('f-auditor').value,
-    fuasE: parseInt(document.getElementById('f-fuas-e').value)||0,
-    fechaE: document.getElementById('f-fecha-e').value.split('-').reverse().join('/'),
-    fuasA: parseInt(document.getElementById('f-fuas-a').value)||0,
-    fechaD: document.getElementById('f-fecha-d').value.split('-').reverse().join('/'),
-    cat: document.getElementById('f-categoria').value
-  };
-  if(!r.auditor||!r.fuasE||!r.fechaE||!r.fuasA||!r.fechaD||!r.cat) { alert('Completa todos los campos'); return; }
+  if (editandoIdx!==null) return;
+  const r = { auditor:document.getElementById('f-auditor').value, fuasE:parseInt(document.getElementById('f-fuas-e').value)||0, fechaE:document.getElementById('f-fecha-e').value.split('-').reverse().join('/'), fuasA:parseInt(document.getElementById('f-fuas-a').value)||0, fechaD:document.getElementById('f-fecha-d').value.split('-').reverse().join('/'), cat:document.getElementById('f-categoria').value };
+  if (!r.auditor||!r.fuasE||!r.fechaE||!r.fuasA||!r.fechaD||!r.cat) { alert('Completa todos los campos'); return; }
   const ok = await enviarAPI('add',r);
-  if(ok) { limpiarForm(); await cargarDatos(); showOk('✓ Guardado'); }
+  if (ok) { limpiarForm(); await cargarDatos(); showOk('✓ Guardado'); }
 }
-
 async function eliminar(idx) { if(!esAdmin) return; if(confirm('¿Eliminar?')) { await enviarAPI('delete',{id:datos[idx].id}); await cargarDatos(); } }
-
 function editarRegistro(idx) {
   if(!esAdmin) return; editandoIdx=idx; const d=datos[idx];
   document.getElementById('f-auditor').value=d.auditor;
@@ -381,202 +447,585 @@ function editarRegistro(idx) {
   document.getElementById('btnCancel').style.display='inline-block';
   renderTabla();
 }
-
 async function actualizarRegistro() {
   if(editandoIdx===null) return;
-  const r = { id: datos[editandoIdx].id, auditor: document.getElementById('f-auditor').value, fuasE: parseInt(document.getElementById('f-fuas-e').value)||0, fechaE: document.getElementById('f-fecha-e').value.split('-').reverse().join('/'), fuasA: parseInt(document.getElementById('f-fuas-a').value)||0, fechaD: document.getElementById('f-fecha-d').value.split('-').reverse().join('/'), cat: document.getElementById('f-categoria').value };
+  const r={id:datos[editandoIdx].id,auditor:document.getElementById('f-auditor').value,fuasE:parseInt(document.getElementById('f-fuas-e').value)||0,fechaE:document.getElementById('f-fecha-e').value.split('-').reverse().join('/'),fuasA:parseInt(document.getElementById('f-fuas-a').value)||0,fechaD:document.getElementById('f-fecha-d').value.split('-').reverse().join('/'),cat:document.getElementById('f-categoria').value};
   await enviarAPI('update',r); cancelarEdicion(); await cargarDatos(); showOk('✓ Actualizado');
 }
-
 function cancelarEdicion() { editandoIdx=null; limpiarForm(); document.getElementById('formTitle').textContent='Agregar registro'; document.getElementById('btnAdd').style.display='inline-block'; document.getElementById('btnUpdate').style.display='none'; document.getElementById('btnCancel').style.display='none'; renderTabla(); }
-function limpiarForm() { ['f-auditor','f-fuas-e','f-fecha-e','f-fuas-a','f-fecha-d','f-categoria'].forEach(id=>{ const el=document.getElementById(id); el.tagName==='SELECT' ? (el.selectedIndex=0) : (el.value=''); }); }
+function limpiarForm() { ['f-auditor','f-fuas-e','f-fecha-e','f-fuas-a','f-fecha-d','f-categoria'].forEach(id=>{const el=document.getElementById(id);el.tagName==='SELECT'?(el.selectedIndex=0):(el.value='');}); }
 function showOk(m) { const o=document.getElementById('ok-msg'); o.textContent=m; o.style.display='inline-block'; setTimeout(()=>o.style.display='none',2500); }
 
-// ============ REPORTE DIARIO ============
-function toggleDiario() {
-  const card = document.getElementById('reporteDiarioCard');
-  card.classList.toggle('show');
-  if (card.classList.contains('show')) {
-    // Poner mes actual
-    const now = new Date();
-    document.getElementById('diarioMes').value = now.getMonth();
-    actSelectorAniosDiario();
-    document.getElementById('diarioAnio').value = now.getFullYear().toString();
-    renderReporteDiario();
-    card.scrollIntoView({ behavior: 'smooth' });
-  }
+/* ── SELECTORES ── */
+function actualizarSelectoresAuditores() {
+  const auds=[...new Set(datos.map(d=>d.auditor))].sort();
+  ['diarioAuditor','mensualAuditor'].forEach(id=>{
+    const sel=document.getElementById(id), act=sel.value;
+    sel.innerHTML='<option value="">Todos los auditores</option>'+auds.map(a=>`<option${a===act?' selected':''}>${a}</option>`).join('');
+  });
 }
-
+function actSelectorAnios() {
+  const anios=new Set(); datos.forEach(d=>{const p=d.fechaE.split('/');if(p.length===3)anios.add(p[2]);});
+  const sel=document.getElementById('yearSelector'),actual=sel.value||new Date().getFullYear().toString();
+  sel.innerHTML=[...anios].sort((a,b)=>b-a).map(a=>`<option${a===actual?' selected':''}>${a}</option>`).join('')||`<option>${actual}</option>`;
+}
 function actSelectorAniosDiario() {
-  const anios = new Set();
-  datos.forEach(d => {
-    const f = parseFecha(d.fechaE);
-    if (f) anios.add(f.anio);
-  });
-  const sel = document.getElementById('diarioAnio');
-  const actual = new Date().getFullYear().toString();
-  sel.innerHTML = [...anios].sort((a,b) => b-a).map(a => `<option${a===actual?' selected':''}>${a}</option>`).join('') || `<option>${actual}</option>`;
+  const anios=new Set(); datos.forEach(d=>{const f=parseFecha(d.fechaE);if(f)anios.add(f.anio);});
+  const sel=document.getElementById('diarioAnio'),actual=new Date().getFullYear().toString();
+  sel.innerHTML=[...anios].sort((a,b)=>b-a).map(a=>`<option${a===actual?' selected':''}>${a}</option>`).join('')||`<option>${actual}</option>`;
 }
 
-function renderReporteDiario() {
-  const mes = parseInt(document.getElementById('diarioMes').value);
-  const anio = document.getElementById('diarioAnio').value;
-  const diasEnMes = new Date(parseInt(anio), mes + 1, 0).getDate();
-  
-  // Agrupar por día
-  const reporte = {};
-  datos.forEach(d => {
-    const f = parseFecha(d.fechaE);
-    if (f && f.mes === mes && f.anio === anio) {
-      const dia = f.dia;
-      if (!reporte[dia]) reporte[dia] = { e: 0, a: 0, registros: [] };
-      reporte[dia].e += d.fuasE;
-      reporte[dia].a += d.fuasA;
-      reporte[dia].registros.push(d);
+/* ── TOGGLE SECCIONES ── */
+function toggleDiario() {
+  const card=document.getElementById('reporteDiarioCard');
+  card.classList.toggle('show');
+  if(card.classList.contains('show')){
+    const now=new Date();
+    document.getElementById('diarioMes').value=now.getMonth();
+    actualizarSelectoresAuditores(); actSelectorAniosDiario();
+    document.getElementById('diarioAnio').value=now.getFullYear().toString();
+    renderReporteDiario(); card.scrollIntoView({behavior:'smooth'});
+  }
+}
+function toggleMensual() {
+  const card=document.getElementById('reporteMensualCard');
+  card.classList.toggle('show');
+  if(card.classList.contains('show')){ actualizarSelectoresAuditores(); actSelectorAnios(); renderReporteMensual(); card.scrollIntoView({behavior:'smooth'}); }
+}
+function toggleAvance() { document.getElementById('avanceAuditores').classList.toggle('show'); if(document.getElementById('avanceAuditores').classList.contains('show')) renderAvance(); }
+
+/* ── OBTENER DATOS DIARIO ── */
+function getDatosDiario() {
+  const mes=parseInt(document.getElementById('diarioMes').value);
+  const anio=document.getElementById('diarioAnio').value;
+  const audFlt=document.getElementById('diarioAuditor').value;
+  const diasEnMes=new Date(parseInt(anio),mes+1,0).getDate();
+  const reporte={};
+  datos.forEach(d=>{
+    if(audFlt && d.auditor!==audFlt) return;
+    const f=parseFecha(d.fechaE);
+    if(f && f.mes===mes && f.anio===anio){
+      if(!reporte[f.dia]) reporte[f.dia]={e:0,a:0,reg:0,cats:{}};
+      reporte[f.dia].e+=d.fuasE; reporte[f.dia].a+=d.fuasA; reporte[f.dia].reg++;
+      const key=d.cat;
+      if(!reporte[f.dia].cats[key]) reporte[f.dia].cats[key]={e:0,a:0,cod:extraerCodigo(d.cat),nom:extraerNombreCat(d.cat)};
+      reporte[f.dia].cats[key].e+=d.fuasE; reporte[f.dia].cats[key].a+=d.fuasA;
     }
   });
-  
-  document.getElementById('reporteDiarioHead').innerHTML = 
-    '<tr><th>Día</th><th>Entregadas</th><th>Auditadas</th><th>Pendientes</th><th>%</th><th>Registros</th></tr>';
-  
-  let te = 0, ta = 0, totalReg = 0;
-  let html = '';
-  
-  for (let dia = 1; dia <= diasEnMes; dia++) {
-    const r = reporte[dia] || { e: 0, a: 0, registros: [] };
-    te += r.e; ta += r.a;
-    totalReg += r.registros.length;
-    const pct = r.e > 0 ? ((r.a / r.e) * 100).toFixed(1) : '-';
-    const pendiente = r.e - r.a;
-    const color = r.e > 0 ? (parseFloat(pct) >= 90 ? '#27ae60' : parseFloat(pct) >= 70 ? '#f39c12' : '#e74c3c') : '#888';
-    
-    if (r.e > 0 || r.a > 0) {
-      html += `<tr>
-        <td><strong>${dia} ${MESES[mes].substring(0,3)}</strong></td>
-        <td class="num">${r.e.toLocaleString()}</td>
-        <td class="num">${r.a.toLocaleString()}</td>
-        <td class="num" style="color:${pendiente>0?'#e74c3c':'#27ae60'}">${pendiente > 0 ? pendiente.toLocaleString() : '0'}</td>
-        <td class="num"><span style="color:${color};font-weight:600;">${pct}${pct!=='-'?'%':''}</span></td>
-        <td class="num">${r.registros.length}</td>
+  return {mes,anio,audFlt,diasEnMes,reporte};
+}
+
+/* ── RENDER DIARIO ── */
+function renderReporteDiario() {
+  const {mes,anio,audFlt,diasEnMes,reporte}=getDatosDiario();
+  const infoTxt=`Auditor: ${audFlt||'Todos'} | Mes: ${MESES[mes]} ${anio}`;
+  document.getElementById('diarioPrintInfo').textContent=infoTxt;
+  document.getElementById('reporteDiarioHead').innerHTML=
+    '<tr>'+
+    '<th rowspan="2">Día</th>'+
+    '<th rowspan="2">ID Servicio</th>'+
+    '<th rowspan="2">Categoría</th>'+
+    '<th rowspan="2" class="num">Entregadas</th>'+
+    '<th rowspan="2" class="num">Auditadas</th>'+
+    '<th rowspan="2" class="num">Pendientes</th>'+
+    '<th rowspan="2" class="num">%</th>'+
+    '</tr>';
+  let te=0,ta=0,html='';
+  for(let dia=1;dia<=diasEnMes;dia++){
+    const r=reporte[dia]||{e:0,a:0,reg:0,cats:{}};
+    if(r.e===0&&r.a===0) continue;
+    te+=r.e; ta+=r.a;
+    const cats=Object.values(r.cats);
+    const pctDia=r.e>0?((r.a/r.e)*100).toFixed(1):'-';
+    const colorDia=r.e>0?(parseFloat(pctDia)>=90?'#27ae60':parseFloat(pctDia)>=70?'#f39c12':'#e74c3c'):'#888';
+    // Fila resumen del día
+    html+=`<tr style="background:#eef4fb;">
+      <td rowspan="${cats.length+1}"><strong>${dia} ${MESES[mes].substring(0,3)}</strong></td>
+      <td colspan="2" style="font-size:10px;color:#555;font-style:italic;">Subtotal del día (${cats.length} categoría${cats.length!==1?'s':''})</td>
+      <td class="num"><strong>${r.e.toLocaleString()}</strong></td>
+      <td class="num"><strong>${r.a.toLocaleString()}</strong></td>
+      <td class="num" style="color:${r.e-r.a>0?'#e74c3c':'#27ae60'}"><strong>${(r.e-r.a).toLocaleString()}</strong></td>
+      <td class="num"><span style="color:${colorDia};font-weight:700;">${pctDia}${pctDia!=='-'?'%':''}</span></td>
+    </tr>`;
+    // Filas por categoría
+    cats.forEach(c=>{
+      const pctC=c.e>0?((c.a/c.e)*100).toFixed(1):'-';
+      const colorC=c.e>0?(parseFloat(pctC)>=90?'#27ae60':parseFloat(pctC)>=70?'#f39c12':'#e74c3c'):'#888';
+      html+=`<tr style="font-size:11px;">
+        <td style="padding-left:10px;"><span style="display:inline-block;padding:2px 7px;border-radius:4px;background:#e8f0f7;color:#185FA5;font-weight:700;font-size:10px;">${c.cod}</span></td>
+        <td style="text-align:left;padding-left:6px;color:#444;">${c.nom}</td>
+        <td class="num">${c.e.toLocaleString()}</td>
+        <td class="num">${c.a.toLocaleString()}</td>
+        <td class="num" style="color:${c.e-c.a>0?'#e74c3c':'#27ae60'}">${(c.e-c.a).toLocaleString()}</td>
+        <td class="num"><span style="color:${colorC};font-weight:600;">${pctC}${pctC!=='-'?'%':''}</span></td>
       </tr>`;
-    }
+    });
   }
-  
-  const pctTotal = te > 0 ? ((ta / te) * 100).toFixed(1) : 0;
-  html += `<tr class="total-row">
-    <td><strong>TOTAL ${MESES[mes].toUpperCase()} ${anio}</strong></td>
+  const pctTotal=te>0?((ta/te)*100).toFixed(1):0;
+  html+=`<tr class="total-row">
+    <td colspan="3"><strong>TOTAL ${MESES[mes].toUpperCase()} ${anio}</strong></td>
     <td class="num">${te.toLocaleString()}</td>
     <td class="num">${ta.toLocaleString()}</td>
     <td class="num">${(te-ta).toLocaleString()}</td>
     <td class="num">${pctTotal}%</td>
-    <td class="num">${totalReg}</td>
   </tr>`;
-  
-  document.getElementById('reporteDiarioBody').innerHTML = html || `<tr><td colspan="6" class="empty">Sin datos para ${MESES[mes]} ${anio}</td></tr>`;
+  document.getElementById('reporteDiarioBody').innerHTML=html||`<tr><td colspan="7" class="empty">Sin datos para ${MESES[mes]} ${anio}</td></tr>`;
 }
 
-function exportarCSVdiario() {
-  const mes = parseInt(document.getElementById('diarioMes').value);
-  const anio = document.getElementById('diarioAnio').value;
-  const diasEnMes = new Date(parseInt(anio), mes + 1, 0).getDate();
-  
-  const filas = [['Día','Entregadas','Auditadas','Pendientes','%','Registros']];
-  
-  for (let dia = 1; dia <= diasEnMes; dia++) {
-    let e = 0, a = 0, reg = 0;
-    datos.forEach(d => {
-      const f = parseFecha(d.fechaE);
-      if (f && f.dia === dia && f.mes === mes && f.anio === anio) {
-        e += d.fuasE; a += d.fuasA; reg++;
-      }
-    });
-    if (e > 0 || a > 0) {
-      filas.push([`${dia} ${MESES[mes]}`, e, a, e-a, e>0?((a/e)*100).toFixed(1):0, reg]);
-    }
-  }
-  
-  const csv = filas.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-  const b = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(b);
-  link.download = `reporte_diario_${MESES[mes]}_${anio}.csv`;
-  link.click();
-}
-
-// ============ RENDER ============
-function renderResumenGeneral() {
-  const rA={}, rM={};
+/* ── OBTENER DATOS MENSUAL ── */
+function getDatosMensual() {
+  const anio=document.getElementById('yearSelector').value;
+  const audFlt=document.getElementById('mensualAuditor').value;
+  const mesFltVal=document.getElementById('mensualMes').value;
+  const mesFlt=mesFltVal!==''?parseInt(mesFltVal):null;
+  const reporte={};
   datos.forEach(d=>{
-    if(!rA[d.auditor]) rA[d.auditor]={e:0,a:0};
-    rA[d.auditor].e+=d.fuasE; rA[d.auditor].a+=d.fuasA;
-    const p=d.fechaE.split('/');
-    if(p.length===3){
-      const c=`${MESES[parseInt(p[1])-1]} ${p[2]}`;
-      if(!rM[c]) rM[c]={e:0,a:0,o:`${p[2]}-${String(parseInt(p[1])).padStart(2,'0')}`};
-      rM[c].e+=d.fuasE; rM[c].a+=d.fuasA;
+    if(audFlt && d.auditor!==audFlt) return;
+    const f=parseFecha(d.fechaE);
+    if(f && f.anio===anio){
+      if(mesFlt!==null && f.mes!==mesFlt) return;
+      if(!reporte[d.auditor]) reporte[d.auditor]={meses:Array(12).fill(null).map(()=>({e:0,a:0,cats:{}}))};
+      reporte[d.auditor].meses[f.mes].e+=d.fuasE;
+      reporte[d.auditor].meses[f.mes].a+=d.fuasA;
+      const key=d.cat;
+      if(!reporte[d.auditor].meses[f.mes].cats[key])
+        reporte[d.auditor].meses[f.mes].cats[key]={e:0,a:0,cod:extraerCodigo(d.cat),nom:extraerNombreCat(d.cat)};
+      reporte[d.auditor].meses[f.mes].cats[key].e+=d.fuasE;
+      reporte[d.auditor].meses[f.mes].cats[key].a+=d.fuasA;
     }
   });
-  let hA='',te=0,ta=0;
-  Object.keys(rA).sort().forEach(a=>{const r=rA[a]; te+=r.e; ta+=r.a; const pct=r.e>0?((r.a/r.e)*100).toFixed(1):0; hA+=`<tr><td><strong>${a}</strong></td><td class="num">${r.e.toLocaleString()}</td><td class="num">${r.a.toLocaleString()}</td><td class="num"><span style="color:${pct>=90?'#27ae60':pct>=70?'#f39c12':'#e74c3c'};font-weight:600;">${pct}%</span></td></tr>`;});
-  hA+=`<tr class="total-row"><td><strong>TOTAL</strong></td><td class="num">${te.toLocaleString()}</td><td class="num">${ta.toLocaleString()}</td><td class="num">${te>0?((ta/te)*100).toFixed(1):0}%</td></tr>`;
-  document.getElementById('resumen-auditor-body').innerHTML=hA||'<tr><td colspan="4" class="empty">Sin datos</td></tr>';
-  let hM='',tme=0,tma=0;
-  Object.keys(rM).sort((a,b)=>rM[a].o.localeCompare(rM[b].o)).forEach(m=>{const r=rM[m]; tme+=r.e; tma+=r.a; const pct=r.e>0?((r.a/r.e)*100).toFixed(1):0; hM+=`<tr><td><strong>${m}</strong></td><td class="num">${r.e.toLocaleString()}</td><td class="num">${r.a.toLocaleString()}</td><td class="num"><span style="color:${pct>=90?'#27ae60':pct>=70?'#f39c12':'#e74c3c'};font-weight:600;">${pct}%</span></td></tr>`;});
-  hM+=`<tr class="total-row"><td><strong>TOTAL</strong></td><td class="num">${tme.toLocaleString()}</td><td class="num">${tma.toLocaleString()}</td><td class="num">${tme>0?((tma/tme)*100).toFixed(1):0}%</td></tr>`;
-  document.getElementById('resumen-mes-body').innerHTML=hM||'<tr><td colspan="4" class="empty">Sin datos</td></tr>';
+  return {anio,audFlt,mesFlt,reporte};
 }
 
-function toggleAvance() { document.getElementById('avanceAuditores').classList.toggle('show'); if(document.getElementById('avanceAuditores').classList.contains('show')) renderAvance(); }
-
-function renderAvance() {
-  const res={};
-  datos.forEach(d=>{if(!res[d.auditor]) res[d.auditor]={e:0,a:0,cats:{}}; res[d.auditor].e+=d.fuasE; res[d.auditor].a+=d.fuasA; res[d.auditor].cats[d.cat]=(res[d.auditor].cats[d.cat]||0)+1;});
-  const auds=Object.keys(res).sort(), maxE=Math.max(...auds.map(a=>res[a].e),1);
-  document.getElementById('avanceGrid').innerHTML=auds.length===0?'<div class="empty">Sin datos</div>':auds.map(a=>{const r=res[a], pct=r.e>0?parseFloat(((r.a/r.e)*100).toFixed(1)):0, cl=pct>=90?'alto':pct>=70?'medio':'bajo'; return `<div class="avance-card"><div class="avance-header"><span class="avance-nombre">👤 ${a}</span><span class="avance-porcentaje ${cl}">${pct}%</span></div><div class="avance-numeros"><span>📥 ${r.e.toLocaleString()}</span><span>📤 ${r.a.toLocaleString()}</span></div><div class="barra-progreso"><div class="relleno ${cl}" style="width:${(r.e/maxE)*100}%"></div></div><div class="avance-detalle">${r.e-r.a>0?`⚠️ Pendiente: ${(r.e-r.a).toLocaleString()}`:'✅ Al día'} | 📂 ${Object.keys(r.cats).length}/7</div></div>`;}).join('');
-}
-
-function toggleMensual() { document.getElementById('reporteMensualCard').classList.toggle('show'); if(document.getElementById('reporteMensualCard').classList.contains('show')){ actSelectorAnios(); renderReporteMensual(); } }
-
-function actSelectorAnios() {
-  const anios=new Set(); datos.forEach(d=>{const p=d.fechaE.split('/');if(p.length===3) anios.add(p[2]);});
-  const sel=document.getElementById('yearSelector'), actual=sel.value||new Date().getFullYear().toString();
-  sel.innerHTML=[...anios].sort((a,b)=>b-a).map(a=>`<option${a===actual?' selected':''}>${a}</option>`).join('')||`<option>${actual}</option>`;
-}
-
+/* ── RENDER MENSUAL ── */
 function renderReporteMensual() {
-  const anio=document.getElementById('yearSelector').value, reporte={};
-  datos.forEach(d=>{const f=parseFecha(d.fechaE); if(f&&f.anio===anio){if(!reporte[d.auditor]) reporte[d.auditor]=Array(12).fill(null).map(()=>({e:0,a:0})); reporte[d.auditor][f.mes].e+=d.fuasE; reporte[d.auditor][f.mes].a+=d.fuasA;}});
+  const {anio,audFlt,mesFlt,reporte}=getDatosMensual();
   const auds=Object.keys(reporte).sort();
-  document.getElementById('reporteMensualHead').innerHTML='<tr><th>Auditor</th>'+MESES.map(m=>`<th colspan="2">${m.substring(0,3)}</th>`).join('')+'<th colspan="2">TOTAL</th></tr><tr><th></th>'+MESES.map(()=>'<th>E</th><th>A</th>').join('')+'<th>E</th><th>A</th></tr>';
-  if(auds.length===0){document.getElementById('reporteMensualBody').innerHTML=`<tr><td colspan="26" class="empty">Sin datos para ${anio}</td></tr>`;return;}
+  const labelFiltro=`Auditor: ${audFlt||'Todos'} | Año: ${anio}${mesFlt!==null?' | '+MESES[mesFlt]:''}`;
+  document.getElementById('mensualPrintInfo').textContent=labelFiltro;
+
+  // Recolectar categorías presentes
+  const todasCats={};
+  auds.forEach(a=>{
+    reporte[a].meses.forEach(m=>{
+      Object.keys(m.cats).forEach(k=>{
+        if(!todasCats[k]) todasCats[k]={cod:m.cats[k].cod,nom:m.cats[k].nom};
+      });
+    });
+  });
+  const catKeys=Object.keys(todasCats).sort();
+
+  if(auds.length===0){
+    document.getElementById('reporteMensualHead').innerHTML='';
+    document.getElementById('reporteMensualBody').innerHTML=
+      `<tr><td colspan="10" class="empty">Sin datos para ${anio}${audFlt?' - '+audFlt:''}${mesFlt!==null?' - '+MESES[mesFlt]:''}</td></tr>`;
+    return;
+  }
+
+  /* ---- VISTA UN SOLO MES ---- */
+  if(mesFlt!==null){
+    document.getElementById('reporteMensualHead').innerHTML=
+      `<tr>
+        <th rowspan="2">Auditor</th>
+        <th rowspan="2">ID Serv.</th>
+        <th rowspan="2">Categoría</th>
+        <th colspan="4">${MESES[mesFlt]} ${anio}</th>
+      </tr>
+      <tr>
+        <th>Entregadas</th><th>Auditadas</th><th>Pendientes</th><th>%</th>
+      </tr>`;
+
+    let html='';
+    const totGlobM={e:0,a:0};
+
+    auds.forEach(a=>{
+      const m=reporte[a].meses[mesFlt];
+      totGlobM.e+=m.e; totGlobM.a+=m.a;
+      const pctAud=m.e>0?((m.a/m.e)*100).toFixed(1):'-';
+      const colorAud=m.e>0?(parseFloat(pctAud)>=90?'#27ae60':parseFloat(pctAud)>=70?'#f39c12':'#e74c3c'):'#888';
+      const cats=Object.values(m.cats);
+
+      // Fila subtotal auditor
+      html+=`<tr style="background:#eef4fb;">
+        <td rowspan="${cats.length+1}"><strong>${a}</strong></td>
+        <td colspan="2" style="font-size:10px;color:#555;font-style:italic;">Subtotal auditor</td>
+        <td class="num"><strong>${m.e.toLocaleString()}</strong></td>
+        <td class="num"><strong>${m.a.toLocaleString()}</strong></td>
+        <td class="num" style="color:${m.e-m.a>0?'#e74c3c':'#27ae60'}"><strong>${(m.e-m.a).toLocaleString()}</strong></td>
+        <td class="num"><span style="color:${colorAud};font-weight:700;">${pctAud}${pctAud!=='-'?'%':''}</span></td>
+      </tr>`;
+
+      // Filas por categoría
+      catKeys.forEach(k=>{
+        const c=m.cats[k]||{e:0,a:0,cod:todasCats[k].cod,nom:todasCats[k].nom};
+        if(c.e===0&&c.a===0){return;}
+        const pctC=c.e>0?((c.a/c.e)*100).toFixed(1):'-';
+        const colorC=c.e>0?(parseFloat(pctC)>=90?'#27ae60':parseFloat(pctC)>=70?'#f39c12':'#e74c3c'):'#888';
+        html+=`<tr style="font-size:11px;">
+          <td style="padding-left:8px;"><span style="display:inline-block;padding:2px 6px;border-radius:4px;background:#e8f0f7;color:#185FA5;font-weight:700;font-size:10px;">${c.cod}</span></td>
+          <td style="text-align:left;padding-left:6px;color:#444;">${c.nom}</td>
+          <td class="num">${c.e.toLocaleString()}</td>
+          <td class="num">${c.a.toLocaleString()}</td>
+          <td class="num" style="color:${c.e-c.a>0?'#e74c3c':'#27ae60'}">${(c.e-c.a).toLocaleString()}</td>
+          <td class="num"><span style="color:${colorC};font-weight:600;">${pctC}${pctC!=='-'?'%':''}</span></td>
+        </tr>`;
+      });
+    });
+
+    // Fila total general
+    if(auds.length>1){
+      const pctTot=totGlobM.e>0?((totGlobM.a/totGlobM.e)*100).toFixed(1):0;
+      html+=`<tr class="total-row">
+        <td colspan="3"><strong>TOTAL GENERAL</strong></td>
+        <td class="num">${totGlobM.e.toLocaleString()}</td>
+        <td class="num">${totGlobM.a.toLocaleString()}</td>
+        <td class="num">${(totGlobM.e-totGlobM.a).toLocaleString()}</td>
+        <td class="num">${pctTot}%</td>
+      </tr>`;
+    }
+    document.getElementById('reporteMensualBody').innerHTML=html;
+    return;
+  }
+
+  /* ---- VISTA TODOS LOS MESES ---- */
+  document.getElementById('reporteMensualHead').innerHTML=
+    '<tr><th rowspan="2">Auditor</th><th rowspan="2">ID Serv.</th><th rowspan="2">Categoría</th>'+
+    MESES.map(m=>`<th colspan="2">${m.substring(0,3)}</th>`).join('')+
+    '<th colspan="2">TOTAL</th></tr>'+
+    '<tr>'+MESES.map(()=>'<th>E</th><th>A</th>').join('')+'<th>E</th><th>A</th></tr>';
+
   let html='';
-  auds.forEach(a=>{html+=`<tr><td><strong>${a}</strong></td>`;let te=0,ta=0;for(let m=0;m<12;m++){const d=reporte[a][m];te+=d.e;ta+=d.a;const pct=d.e>0?(d.a/d.e)*100:0,cls=pct>=90?'celda-alta':pct>=70?'celda-media':(d.e>0||d.a>0)?'celda-baja':'';html+=`<td class="num ${cls}">${d.e||'-'}</td><td class="num ${cls}">${d.a||'-'}</td>`;}html+=`<td class="num" style="font-weight:700;">${te.toLocaleString()}</td><td class="num" style="font-weight:700;">${ta.toLocaleString()} (${te>0?((ta/te)*100).toFixed(1):0}%)</td></tr>`;});
+  const totGlob=Array(12).fill(null).map(()=>({e:0,a:0}));
+
+  auds.forEach(a=>{
+    const meses=reporte[a].meses;
+    let teAud=0,taAud=0;
+    meses.forEach((m,i)=>{teAud+=m.e;taAud+=m.a;totGlob[i].e+=m.e;totGlob[i].a+=m.a;});
+
+    // Fila subtotal auditor
+    html+=`<tr style="background:#eef4fb;">
+      <td rowspan="${catKeys.length+1}"><strong>${a}</strong></td>
+      <td colspan="2" style="font-size:10px;color:#555;font-style:italic;">Subtotal auditor</td>`;
+    meses.forEach((m,i)=>{
+      const pct=m.e>0?(m.a/m.e)*100:0,cls=pct>=90?'celda-alta':pct>=70?'celda-media':(m.e>0||m.a>0)?'celda-baja':'';
+      html+=`<td class="num ${cls}"><strong>${m.e||'-'}</strong></td><td class="num ${cls}"><strong>${m.a||'-'}</strong></td>`;
+    });
+    html+=`<td class="num" style="font-weight:700;">${teAud.toLocaleString()}</td>
+           <td class="num" style="font-weight:700;">${taAud.toLocaleString()} (${teAud>0?((taAud/teAud)*100).toFixed(1):0}%)</td></tr>`;
+
+    // Filas por categoría
+    catKeys.forEach(k=>{
+      const info=todasCats[k];
+      let teCat=0,taCat=0;
+      const celdas=meses.map(m=>{const c=m.cats[k]||{e:0,a:0};teCat+=c.e;taCat+=c.a;return c;});
+      html+=`<tr style="font-size:11px;">
+        <td style="padding-left:8px;"><span style="display:inline-block;padding:2px 6px;border-radius:4px;background:#e8f0f7;color:#185FA5;font-weight:700;font-size:10px;">${info.cod}</span></td>
+        <td style="text-align:left;padding-left:6px;color:#444;white-space:nowrap;">${info.nom}</td>`;
+      celdas.forEach(c=>{
+        const pct=c.e>0?(c.a/c.e)*100:0,cls=pct>=90?'celda-alta':pct>=70?'celda-media':(c.e>0||c.a>0)?'celda-baja':'';
+        html+=`<td class="num ${cls}">${c.e||'-'}</td><td class="num ${cls}">${c.a||'-'}</td>`;
+      });
+      html+=`<td class="num">${teCat||'-'}</td><td class="num">${taCat||'-'}</td></tr>`;
+    });
+  });
+
+  // Fila totales globales
+  if(auds.length>1){
+    const totE=totGlob.reduce((s,m)=>s+m.e,0),totA=totGlob.reduce((s,m)=>s+m.a,0);
+    html+='<tr class="total-row"><td colspan="3"><strong>TOTAL GENERAL</strong></td>'+
+      totGlob.map(m=>`<td class="num">${m.e||'-'}</td><td class="num">${m.a||'-'}</td>`).join('')+
+      `<td class="num">${totE.toLocaleString()}</td><td class="num">${totA.toLocaleString()} (${totE>0?((totA/totE)*100).toFixed(1):0}%)</td></tr>`;
+  }
   document.getElementById('reporteMensualBody').innerHTML=html;
 }
 
+/* ── GRÁFICO ── */
 function toggleGrafico() {
   const c=document.getElementById('graficoContainer');
-  if(c.innerHTML===''){c.innerHTML='<div class="grafico-container"><h4 style="text-align:center;margin-bottom:10px;color:#185FA5;">📊 GRÁFICO</h4><canvas id="graficoCanvas" style="width:100%;max-height:300px;"></canvas><div class="grafico-leyenda"><div class="leyenda-item"><div class="leyenda-color" style="background:#185FA5;"></div> Entregadas</div><div class="leyenda-item"><div class="leyenda-color" style="background:#27ae60;"></div> Auditadas</div></div></div>';setTimeout(()=>dibujarGrafico(),100);}else{c.innerHTML='';}
+  if(c.innerHTML===''){c.innerHTML='<div class="grafico-container"><h4 style="text-align:center;margin-bottom:10px;color:#185FA5;">📊 GRÁFICO MENSUAL</h4><canvas id="graficoCanvas" style="width:100%;max-height:300px;"></canvas><div class="grafico-leyenda"><div class="leyenda-item"><div class="leyenda-color" style="background:#185FA5;"></div> Entregadas</div><div class="leyenda-item"><div class="leyenda-color" style="background:#27ae60;"></div> Auditadas</div></div></div>';setTimeout(()=>dibujarGrafico(),100);}else{c.innerHTML='';}
 }
-
 function dibujarGrafico() {
   const canvas=document.getElementById('graficoCanvas');if(!canvas)return;
-  const ctx=canvas.getContext('2d'), anio=document.getElementById('yearSelector').value;
+  const ctx=canvas.getContext('2d'),{reporte}=getDatosMensual();
   const t=Array(12).fill(null).map(()=>({e:0,a:0}));
-  datos.forEach(d=>{const f=parseFecha(d.fechaE);if(f&&f.anio===anio){t[f.mes].e+=d.fuasE;t[f.mes].a+=d.fuasA;}});
+  Object.values(reporte).forEach(aud=>{aud.meses.forEach((d,i)=>{t[i].e+=d.e;t[i].a+=d.a;});});
   canvas.width=canvas.parentElement.offsetWidth-20;canvas.height=300;
   const W=canvas.width,H=canvas.height,pad={top:20,right:20,bottom:40,left:50},cw=W-pad.left-pad.right,ch=H-pad.top-pad.bottom,maxV=Math.max(...t.map(m=>Math.max(m.e,m.a)),1);
-  ctx.clearRect(0,0,W,H);
-  ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;
+  ctx.clearRect(0,0,W,H);ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;
   for(let i=0;i<=4;i++){const y=pad.top+(ch/4)*i;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();ctx.fillStyle='#888';ctx.font='10px Arial';ctx.textAlign='right';ctx.fillText(Math.round(maxV-(maxV/4)*i),pad.left-5,y+3);}
   const bw=cw/12*.3;
   t.forEach((m,i)=>{const x=pad.left+(cw/12)*i+(cw/12)*.2;ctx.fillStyle='#185FA5';ctx.fillRect(x,pad.top+ch-(m.e/maxV)*ch,bw,(m.e/maxV)*ch);ctx.fillStyle='#27ae60';ctx.fillRect(x+bw+2,pad.top+ch-(m.a/maxV)*ch,bw,(m.a/maxV)*ch);ctx.fillStyle='#333';ctx.font='9px Arial';ctx.textAlign='center';ctx.fillText(MESES[i].substring(0,3),x+bw,pad.top+ch+15);});
 }
 
+/* ── EXPORTAR EXCEL DIARIO ── */
+function exportarExcelDiario() {
+  const {mes,anio,audFlt,diasEnMes,reporte}=getDatosDiario();
+  const filas=[
+    [`REPORTE DIARIO - ${MESES[mes].toUpperCase()} ${anio}${audFlt?' | '+audFlt:' | TODOS LOS AUDITORES'}`],[],
+    ['Día','ID Servicio','Categoría','Entregadas','Auditadas','Pendientes','% Avance']
+  ];
+  let te=0,ta=0;
+  for(let dia=1;dia<=diasEnMes;dia++){
+    const r=reporte[dia]||{e:0,a:0,reg:0,cats:{}};
+    if(r.e===0&&r.a===0) continue;
+    te+=r.e; ta+=r.a;
+    // Fila subtotal del día
+    filas.push([`${dia} ${MESES[mes]}`, '—', 'SUBTOTAL DÍA', r.e, r.a, r.e-r.a, r.e>0?parseFloat(((r.a/r.e)*100).toFixed(1)):0]);
+    // Filas por categoría
+    Object.values(r.cats).forEach(c=>{
+      filas.push(['', c.cod, c.nom, c.e, c.a, c.e-c.a, c.e>0?parseFloat(((c.a/c.e)*100).toFixed(1)):0]);
+    });
+  }
+  filas.push([`TOTAL ${MESES[mes].toUpperCase()} ${anio}`,'','',te,ta,te-ta,te>0?parseFloat(((ta/te)*100).toFixed(1)):0]);
+  const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(filas);
+  ws['!cols']=[{wch:16},{wch:12},{wch:36},{wch:13},{wch:12},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws,'Reporte Diario');
+  XLSX.writeFile(wb,`reporte_diario_${MESES[mes]}_${anio}${audFlt?'_'+audFlt.replace(/\s+/g,'_'):''}.xlsx`);
+}
+
+/* ── EXPORTAR EXCEL MENSUAL ── */
+function exportarExcelMensual() {
+  const {anio,audFlt,mesFlt,reporte}=getDatosMensual();
+  const auds=Object.keys(reporte).sort();
+  const todasCats={};
+  auds.forEach(a=>{reporte[a].meses.forEach(m=>{Object.keys(m.cats).forEach(k=>{if(!todasCats[k])todasCats[k]={cod:m.cats[k].cod,nom:m.cats[k].nom};});});});
+  const catKeys=Object.keys(todasCats).sort();
+  const titulo=`REPORTE MENSUAL ${anio}${audFlt?' | '+audFlt:' | TODOS LOS AUDITORES'}${mesFlt!==null?' | '+MESES[mesFlt]:''}`;
+
+  let filas=[[titulo],[],[]];
+
+  if(mesFlt!==null){
+    // Vista un solo mes
+    filas[2]=['Auditor','ID Serv.','Categoría','Entregadas','Auditadas','Pendientes','% Avance'];
+    const totGlobM={e:0,a:0};
+    auds.forEach(a=>{
+      const m=reporte[a].meses[mesFlt];
+      totGlobM.e+=m.e; totGlobM.a+=m.a;
+      filas.push([a,'—','SUBTOTAL AUDITOR',m.e,m.a,m.e-m.a,m.e>0?parseFloat(((m.a/m.e)*100).toFixed(1)):0]);
+      catKeys.forEach(k=>{
+        const c=m.cats[k]||{e:0,a:0};
+        if(c.e===0&&c.a===0) return;
+        filas.push(['',todasCats[k].cod,todasCats[k].nom,c.e,c.a,c.e-c.a,c.e>0?parseFloat(((c.a/c.e)*100).toFixed(1)):0]);
+      });
+    });
+    if(auds.length>1)
+      filas.push(['TOTAL GENERAL','','',totGlobM.e,totGlobM.a,totGlobM.e-totGlobM.a,totGlobM.e>0?parseFloat(((totGlobM.a/totGlobM.e)*100).toFixed(1)):0]);
+    const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(filas);
+    ws['!cols']=[{wch:28},{wch:10},{wch:36},{wch:13},{wch:12},{wch:12},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,ws,'Reporte Mensual');
+    XLSX.writeFile(wb,`reporte_mensual_${anio}_${MESES[mesFlt]}${audFlt?'_'+audFlt.replace(/\s+/g,'_'):''}.xlsx`);
+    return;
+  }
+
+  // Vista todos los meses
+  const enc=['Auditor','ID Serv.','Categoría',...MESES.flatMap(m=>[m.substring(0,3)+' E',m.substring(0,3)+' A']),'Total E','Total A','% Avance'];
+  filas[2]=enc;
+  const totGlob=Array(12).fill(null).map(()=>({e:0,a:0}));
+  auds.forEach(a=>{
+    const meses=reporte[a].meses;
+    let teAud=0,taAud=0;
+    const filaAud=[a,'—','SUBTOTAL AUDITOR'];
+    meses.forEach((m,i)=>{teAud+=m.e;taAud+=m.a;totGlob[i].e+=m.e;totGlob[i].a+=m.a;filaAud.push(m.e||0,m.a||0);});
+    filaAud.push(teAud,taAud,teAud>0?parseFloat(((taAud/teAud)*100).toFixed(1)):0);
+    filas.push(filaAud);
+    catKeys.forEach(k=>{
+      const info=todasCats[k];let teCat=0,taCat=0;
+      const filaCat=['',info.cod,info.nom];
+      meses.forEach(m=>{const c=m.cats[k]||{e:0,a:0};teCat+=c.e;taCat+=c.a;filaCat.push(c.e||0,c.a||0);});
+      filaCat.push(teCat,taCat,teCat>0?parseFloat(((taCat/teCat)*100).toFixed(1)):0);
+      filas.push(filaCat);
+    });
+  });
+  if(auds.length>1){
+    const totE=totGlob.reduce((s,m)=>s+m.e,0),totA=totGlob.reduce((s,m)=>s+m.a,0);
+    const filaT=['TOTAL GENERAL','',''];
+    totGlob.forEach(m=>filaT.push(m.e||0,m.a||0));
+    filaT.push(totE,totA,totE>0?parseFloat(((totA/totE)*100).toFixed(1)):0);
+    filas.push(filaT);
+  }
+  const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(filas);
+  ws['!cols']=[{wch:28},{wch:10},{wch:36},...Array(24).fill({wch:7}),{wch:9},{wch:9},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws,'Reporte Mensual');
+  XLSX.writeFile(wb,`reporte_mensual_${anio}${audFlt?'_'+audFlt.replace(/\s+/g,'_'):''}.xlsx`);
+}
+
+/* ── EXPORTAR PDF DIARIO ── */
+function exportarPDFDiario() {
+  const {mes,anio,audFlt,diasEnMes,reporte}=getDatosDiario();
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF('l','mm','a4');
+  doc.setFontSize(14);doc.setTextColor(24,95,165);
+  doc.text(`REPORTE DIARIO - ${MESES[mes].toUpperCase()} ${anio}`,14,16);
+  doc.setFontSize(9);doc.setTextColor(80,80,80);
+  doc.text(`Auditor: ${audFlt||'Todos los auditores'}  |  Generado: ${new Date().toLocaleDateString('es-PE')}`,14,23);
+  const body=[];let te=0,ta=0;
+  for(let dia=1;dia<=diasEnMes;dia++){
+    const r=reporte[dia]||{e:0,a:0,reg:0,cats:{}};
+    if(r.e===0&&r.a===0) continue;
+    te+=r.e; ta+=r.a;
+    body.push([{content:`${dia} ${MESES[mes]}`,styles:{fontStyle:'bold',fillColor:[238,244,251]}},
+               {content:'SUBTOTAL',styles:{fillColor:[238,244,251],fontStyle:'italic',fontSize:7}},
+               {content:'',styles:{fillColor:[238,244,251]}},
+               {content:r.e,styles:{fillColor:[238,244,251],fontStyle:'bold'}},
+               {content:r.a,styles:{fillColor:[238,244,251],fontStyle:'bold'}},
+               {content:r.e-r.a,styles:{fillColor:[238,244,251],fontStyle:'bold'}},
+               {content:r.e>0?((r.a/r.e)*100).toFixed(1)+'%':'-',styles:{fillColor:[238,244,251],fontStyle:'bold'}}]);
+    Object.values(r.cats).forEach(c=>{
+      body.push(['', c.cod, c.nom, c.e, c.a, c.e-c.a, c.e>0?((c.a/c.e)*100).toFixed(1)+'%':'-']);
+    });
+  }
+  body.push([{content:'TOTAL',styles:{fontStyle:'bold'}},'','',te,ta,te-ta,te>0?((ta/te)*100).toFixed(1)+'%':'0%']);
+  doc.autoTable({
+    head:[['Día','ID Serv.','Categoría','Entregadas','Auditadas','Pendientes','%']],body,startY:28,
+    headStyles:{fillColor:[24,95,165],fontSize:8,halign:'center'},
+    bodyStyles:{fontSize:8},
+    columnStyles:{0:{halign:'left',cellWidth:22},1:{halign:'center',cellWidth:18},2:{halign:'left',cellWidth:60},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'}},
+  });
+  doc.save(`reporte_diario_${MESES[mes]}_${anio}${audFlt?'_'+audFlt.replace(/\s+/g,'_'):''}.pdf`);
+}
+
+/* ── EXPORTAR PDF MENSUAL ── */
+function exportarPDFMensual() {
+  const {anio,audFlt,mesFlt,reporte}=getDatosMensual();
+  const auds=Object.keys(reporte).sort();
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF('l','mm','a4');
+  doc.setFontSize(14);doc.setTextColor(24,95,165);
+  doc.text(`REPORTE MENSUAL ${anio}${mesFlt!==null?' - '+MESES[mesFlt]:''}`,14,16);
+  doc.setFontSize(9);doc.setTextColor(80,80,80);
+  doc.text(`Auditor: ${audFlt||'Todos los auditores'}  |  Generado: ${new Date().toLocaleDateString('es-PE')}`,14,23);
+
+  const todasCats={};
+  auds.forEach(a=>{reporte[a].meses.forEach(m=>{Object.keys(m.cats).forEach(k=>{if(!todasCats[k])todasCats[k]={cod:m.cats[k].cod,nom:m.cats[k].nom};});});});
+  const catKeys=Object.keys(todasCats).sort();
+
+  if(mesFlt!==null){
+    // Vista un solo mes — tabla vertical compacta
+    const head=[['Auditor','ID','Categoría','Entregadas','Auditadas','Pendientes','%']];
+    const body=[];const totGlobM={e:0,a:0};
+    auds.forEach(a=>{
+      const m=reporte[a].meses[mesFlt];
+      totGlobM.e+=m.e;totGlobM.a+=m.a;
+      const pctA=m.e>0?((m.a/m.e)*100).toFixed(1)+'%':'-';
+      body.push([{content:a,styles:{fontStyle:'bold',fillColor:[238,244,251]}},
+                 {content:'',styles:{fillColor:[238,244,251]}},
+                 {content:'SUBTOTAL AUDITOR',styles:{fontStyle:'italic',fontSize:7,fillColor:[238,244,251]}},
+                 {content:m.e,styles:{fillColor:[238,244,251],fontStyle:'bold'}},
+                 {content:m.a,styles:{fillColor:[238,244,251],fontStyle:'bold'}},
+                 {content:m.e-m.a,styles:{fillColor:[238,244,251],fontStyle:'bold'}},
+                 {content:pctA,styles:{fillColor:[238,244,251],fontStyle:'bold'}}]);
+      catKeys.forEach(k=>{
+        const c=m.cats[k]||{e:0,a:0};
+        if(c.e===0&&c.a===0) return;
+        body.push(['',todasCats[k].cod,todasCats[k].nom,c.e,c.a,c.e-c.a,c.e>0?((c.a/c.e)*100).toFixed(1)+'%':'-']);
+      });
+    });
+    if(auds.length>1)
+      body.push([{content:'TOTAL GENERAL',styles:{fontStyle:'bold'}},'','',totGlobM.e,totGlobM.a,totGlobM.e-totGlobM.a,totGlobM.e>0?((totGlobM.a/totGlobM.e)*100).toFixed(1)+'%':'0%']);
+    doc.autoTable({head,body,startY:28,
+      headStyles:{fillColor:[24,95,165],fontSize:8,halign:'center'},
+      bodyStyles:{fontSize:8},
+      columnStyles:{0:{halign:'left',cellWidth:35},1:{halign:'center',cellWidth:14},2:{halign:'left',cellWidth:60},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'}}
+    });
+    doc.save(`reporte_mensual_${anio}_${MESES[mesFlt]}${audFlt?'_'+audFlt.replace(/\s+/g,'_'):''}.pdf`);
+    return;
+  }
+
+  // Vista todos los meses — tabla horizontal
+  const head=[['Auditor','ID','Categoría',...MESES.map(m=>m.substring(0,3)),'Tot.E','Tot.A','%']];
+  const body=[];const totGlob=Array(12).fill(null).map(()=>({e:0,a:0}));
+  auds.forEach(a=>{
+    const meses=reporte[a].meses;
+    let teAud=0,taAud=0;
+    const filaAud=[{content:a,styles:{fontStyle:'bold',fillColor:[238,244,251]}},'',
+      {content:'SUBTOTAL',styles:{fontStyle:'italic',fontSize:6,fillColor:[238,244,251]}}];
+    meses.forEach((m,i)=>{teAud+=m.e;taAud+=m.a;totGlob[i].e+=m.e;totGlob[i].a+=m.a;
+      filaAud.push({content:m.e?`${m.e}/${m.a}`:'-',styles:{fillColor:[238,244,251],fontStyle:'bold'}});});
+    filaAud.push({content:teAud,styles:{fillColor:[238,244,251],fontStyle:'bold'}},
+                 {content:taAud,styles:{fillColor:[238,244,251],fontStyle:'bold'}},
+                 {content:teAud>0?((taAud/teAud)*100).toFixed(1)+'%':'0%',styles:{fillColor:[238,244,251],fontStyle:'bold'}});
+    body.push(filaAud);
+    catKeys.forEach(k=>{
+      const info=todasCats[k];let teCat=0,taCat=0;
+      const filaCat=['',info.cod,info.nom];
+      meses.forEach(m=>{const c=m.cats[k]||{e:0,a:0};teCat+=c.e;taCat+=c.a;filaCat.push(c.e?`${c.e}/${c.a}`:'-');});
+      filaCat.push(teCat||'-',taCat||'-',teCat>0?((taCat/teCat)*100).toFixed(1)+'%':'-');
+      body.push(filaCat);
+    });
+  });
+  if(auds.length>1){
+    const totE=totGlob.reduce((s,m)=>s+m.e,0),totA=totGlob.reduce((s,m)=>s+m.a,0);
+    body.push([{content:'TOTAL',styles:{fontStyle:'bold'}},'','',...totGlob.map(m=>m.e?`${m.e}/${m.a}`:'-'),totE,totA,totE>0?((totA/totE)*100).toFixed(1)+'%':'0%']);
+  }
+  doc.autoTable({head,body,startY:28,
+    headStyles:{fillColor:[24,95,165],fontSize:6,halign:'center'},
+    bodyStyles:{fontSize:6,halign:'center'},
+    columnStyles:{0:{halign:'left',cellWidth:28},1:{halign:'center',cellWidth:10},2:{halign:'left',cellWidth:30}}
+  });
+  doc.save(`reporte_mensual_${anio}${audFlt?'_'+audFlt.replace(/\s+/g,'_'):''}.pdf`);
+}
+
+/* ── IMPRIMIR SECCIÓN ── */
+function imprimirSeccion(seccionId, printInfoId) {
+  const seccion=document.getElementById(seccionId);
+  // Actualizar info de print antes de clonar
+  const ventana=window.open('','','width=1000,height=700');
+  ventana.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Reporte de Auditoría</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:20px;color:#1a1a1a;}
+    h2{text-align:center;color:#185FA5;margin-bottom:4px;font-size:18px;}
+    .reporte-titulo-bloque h3{font-size:15px;font-weight:700;color:#185FA5;margin-bottom:8px;}
+    .no-print,.export-group,.reporte-controles{display:none!important;}
+    .print-only{display:block!important;font-size:12px;color:#555;margin-bottom:12px;font-style:italic;}
+    table{width:100%;border-collapse:collapse;font-size:11px;}
+    th{background:#185FA5;color:#fff;padding:8px;text-align:center;border:1px solid #0C447C;font-size:10px;}
+    td{padding:6px 8px;border:1px solid #d0d7de;text-align:center;}
+    .total-row{font-weight:700;background:#f0f4f8;}
+    .num{text-align:right;}
+    .celda-alta{color:#27ae60;font-weight:600;}.celda-media{color:#f39c12;font-weight:600;}.celda-baja{color:#e74c3c;font-weight:600;}
+  </style></head><body>
+  <h2>REPORTE DE AUDITORÍA</h2>
+  ${seccion.innerHTML}
+  <script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script>
+  </body></html>`);
+  ventana.document.close();
+}
+
+/* ── RESUMEN GENERAL ── */
+function renderResumenGeneral() {
+  const rA={},rM={};
+  datos.forEach(d=>{
+    if(!rA[d.auditor]) rA[d.auditor]={e:0,a:0};
+    rA[d.auditor].e+=d.fuasE;rA[d.auditor].a+=d.fuasA;
+    const p=d.fechaE.split('/');
+    if(p.length===3){const c=`${MESES[parseInt(p[1])-1]} ${p[2]}`;if(!rM[c]) rM[c]={e:0,a:0,o:`${p[2]}-${String(parseInt(p[1])).padStart(2,'0')}`};rM[c].e+=d.fuasE;rM[c].a+=d.fuasA;}
+  });
+  let hA='',te=0,ta=0;
+  Object.keys(rA).sort().forEach(a=>{const r=rA[a];te+=r.e;ta+=r.a;const pct=r.e>0?((r.a/r.e)*100).toFixed(1):0;hA+=`<tr><td><strong>${a}</strong></td><td class="num">${r.e.toLocaleString()}</td><td class="num">${r.a.toLocaleString()}</td><td class="num"><span style="color:${pct>=90?'#27ae60':pct>=70?'#f39c12':'#e74c3c'};font-weight:600;">${pct}%</span></td></tr>`;});
+  hA+=`<tr class="total-row"><td><strong>TOTAL</strong></td><td class="num">${te.toLocaleString()}</td><td class="num">${ta.toLocaleString()}</td><td class="num">${te>0?((ta/te)*100).toFixed(1):0}%</td></tr>`;
+  document.getElementById('resumen-auditor-body').innerHTML=hA||'<tr><td colspan="4" class="empty">Sin datos</td></tr>';
+  let hM='',tme=0,tma=0;
+  Object.keys(rM).sort((a,b)=>rM[a].o.localeCompare(rM[b].o)).forEach(m=>{const r=rM[m];tme+=r.e;tma+=r.a;const pct=r.e>0?((r.a/r.e)*100).toFixed(1):0;hM+=`<tr><td><strong>${m}</strong></td><td class="num">${r.e.toLocaleString()}</td><td class="num">${r.a.toLocaleString()}</td><td class="num"><span style="color:${pct>=90?'#27ae60':pct>=70?'#f39c12':'#e74c3c'};font-weight:600;">${pct}%</span></td></tr>`;});
+  hM+=`<tr class="total-row"><td><strong>TOTAL</strong></td><td class="num">${tme.toLocaleString()}</td><td class="num">${tma.toLocaleString()}</td><td class="num">${tme>0?((tma/tme)*100).toFixed(1):0}%</td></tr>`;
+  document.getElementById('resumen-mes-body').innerHTML=hM||'<tr><td colspan="4" class="empty">Sin datos</td></tr>';
+}
+
+/* ── AVANCE ── */
+function renderAvance() {
+  const res={};
+  datos.forEach(d=>{if(!res[d.auditor]) res[d.auditor]={e:0,a:0,cats:{}};res[d.auditor].e+=d.fuasE;res[d.auditor].a+=d.fuasA;res[d.auditor].cats[d.cat]=(res[d.auditor].cats[d.cat]||0)+1;});
+  const auds=Object.keys(res).sort(),maxE=Math.max(...auds.map(a=>res[a].e),1);
+  document.getElementById('avanceGrid').innerHTML=auds.length===0?'<div class="empty">Sin datos</div>':auds.map(a=>{
+    const r=res[a],pct=r.e>0?parseFloat(((r.a/r.e)*100).toFixed(1)):0,cl=pct>=90?'alto':pct>=70?'medio':'bajo';
+    return `<div class="avance-card"><div class="avance-header"><span class="avance-nombre">👤 ${a}</span><span class="avance-porcentaje ${cl}">${pct}%</span></div><div class="avance-numeros"><span>📥 ${r.e.toLocaleString()}</span><span>📤 ${r.a.toLocaleString()}</span></div><div class="barra-progreso"><div class="relleno ${cl}" style="width:${(r.e/maxE)*100}%"></div></div><div class="avance-detalle">${r.e-r.a>0?`⚠️ Pendiente: ${(r.e-r.a).toLocaleString()}`:'✅ Al día'} | 📂 ${Object.keys(r.cats).length}/7</div></div>`;
+  }).join('');
+}
+
+/* ── TABLA PRINCIPAL ── */
 function renderTabla() {
   const fa=document.getElementById('flt-auditor').value,fc=document.getElementById('flt-cat').value,fb=document.getElementById('flt-buscar').value.toLowerCase();
   const fil=datos.filter(d=>(!fa||d.auditor===fa)&&(!fc||d.cat===fc)&&(!fb||d.auditor.toLowerCase().includes(fb)||d.cat.toLowerCase().includes(fb)));
-  document.getElementById('tabla-body').innerHTML=fil.length===0?`<tr><td colspan="8" class="empty">Sin resultados</td></tr>`:fil.map((d,i)=>{const oi=datos.indexOf(d);return`<tr class="${editandoIdx===oi?'editing':''}"><td>${d.auditor}</td><td class="num">${d.fuasE}</td><td>${d.fechaE}</td><td class="num">${d.fuasA}</td><td>${d.fechaD}</td><td><span class="codigo-badge">${extraerCodigo(d.cat)}</span></td><td><span class="badge ${getBadge(d.cat)}">${extraerNombreCat(d.cat)}</span></td><td>${esAdmin?`<button class="btn-edit show" onclick="editarRegistro(${oi})">✏️</button><button class="btn-del" onclick="eliminar(${oi})">✕</button>`:''}</td></tr>`;}).join('');
+  document.getElementById('tabla-body').innerHTML=fil.length===0?`<tr><td colspan="8" class="empty">Sin resultados</td></tr>`:fil.map(d=>{const oi=datos.indexOf(d);return`<tr class="${editandoIdx===oi?'editing':''}"><td>${d.auditor}</td><td class="num">${d.fuasE}</td><td>${d.fechaE}</td><td class="num">${d.fuasA}</td><td>${d.fechaD}</td><td><span class="codigo-badge">${extraerCodigo(d.cat)}</span></td><td><span class="badge ${getBadge(d.cat)}">${extraerNombreCat(d.cat)}</span></td><td>${esAdmin?`<button class="btn-edit show" onclick="editarRegistro(${oi})">✏️</button><button class="btn-del" onclick="eliminar(${oi})">✕</button>`:''}</td></tr>`;}).join('');
   document.getElementById('m-total').textContent=datos.length;
   document.getElementById('m-fuas-e').textContent=datos.reduce((s,d)=>s+d.fuasE,0).toLocaleString();
   document.getElementById('m-fuas-a').textContent=datos.reduce((s,d)=>s+d.fuasA,0).toLocaleString();
@@ -585,16 +1034,12 @@ function renderTabla() {
   sel.innerHTML='<option value="">Todos</option>'+auds.map(a=>`<option${a===act?' selected':''}>${a}</option>`).join('');
 }
 
+/* ── RENDER TODO ── */
 function renderTodo() {
-  renderTabla(); renderResumenGeneral();
+  renderTabla(); renderResumenGeneral(); actualizarSelectoresAuditores();
   if(document.getElementById('avanceAuditores').classList.contains('show')) renderAvance();
   if(document.getElementById('reporteMensualCard').classList.contains('show')){ actSelectorAnios(); renderReporteMensual(); }
-  if(document.getElementById('reporteDiarioCard').classList.contains('show')) renderReporteDiario();
-}
-
-function exportarCSV() {
-  const csv=[['Auditor','FUAs Entregadas','Fecha Entrega','FUAs Auditadas','Fecha Devolución','ID Servicio','Categoría'].join(',')].concat(datos.map(d=>`"${d.auditor}","${d.fuasE}","${d.fechaE}","${d.fuasA}","${d.fechaD}","${extraerCodigo(d.cat)}","${d.cat}"`)).join('\n');
-  const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='reporte_auditoria.csv';a.click();
+  if(document.getElementById('reporteDiarioCard').classList.contains('show')){ actSelectorAniosDiario(); renderReporteDiario(); }
 }
 
 cargarDatos();
